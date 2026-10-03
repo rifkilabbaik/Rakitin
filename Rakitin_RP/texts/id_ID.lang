@@ -1,0 +1,34 @@
+## Rakitin - teks bahasa Indonesia
+
+pack.name=Rakitin
+pack.description=Bertahan hidup di lautan dengan rakit.
+
+item.rakit:plastik.name=Plastik
+item.rakit:daun_palem.name=Daun Palem
+item.rakit:besi_tua.name=Besi Tua
+item.rakit:gigi_hiu.name=Gigi Hiu
+item.rakit:daging_hiu_mentah.name=Daging Hiu Mentah
+item.rakit:daging_hiu_matang.name=Daging Hiu Matang
+item.rakit:botol_kosong.name=Botol Kosong
+item.rakit:air_laut.name=Botol Air Laut
+item.rakit:air_bersih.name=Botol Air Bersih
+item.rakit:tombak.name=Tombak
+item.rakit:buku_catatan.name=Buku Catatan Rakit
+item.rakit:pecahan_portal.name=Pecahan Portal
+item.rakit:inti_portal.name=Inti Portal End
+item.rakit:kail_t1.name=Kail Kayu (Tier 1)
+item.rakit:kail_t2.name=Kail Besi (Tier 2)
+item.rakit:kail_t3.name=Kail Emas (Tier 3)
+item.rakit:kail_t4.name=Kail Berlian (Tier 4)
+item.rakit:kail_t5.name=Kail Netherite (Tier 5)
+tile.rakit:fondasi_rakit.name=Fondasi Rakit
+tile.rakit:fondasi_kuat.name=Fondasi Diperkuat
+tile.rakit:penyaring_air.name=Penyaring Air
+tile.rakit:penampung_hujan.name=Penampung Air Hujan
+tile.rakit:pot_tanam.name=Pot Tanam
+tile.rakit:layar.name=Layar
+tile.rakit:kemudi.name=Kemudi
+entity.rakit:hiu.name=Hiu
+item.spawn_egg.entity.rakit:hiu.name=Telur Muncul Hiu
+entity.rakit:puing.name=Puing Hanyut
+item.spawn_egg.entity.rakit:puing.name=Telur Muncul Puing

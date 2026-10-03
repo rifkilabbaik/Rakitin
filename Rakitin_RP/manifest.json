@@ -1,0 +1,44 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Rakitin §aRP",
+    "description": "Tekstur, model, dan teks untuk addon Rakitin.",
+    "uuid": "61ef7b6e-3bce-4cac-888e-84693acde6da",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "e8d4b899-adae-4af1-939e-e38762130e31",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "2a610fbc-92f1-4ffa-bcf9-8929c4026729",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Rakitin"
+    ]
+  }
+}

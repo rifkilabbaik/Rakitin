@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "rakit:penampung_hujan"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "K K",
+      "K K",
+      "PPP"
+    ],
+    "key": {
+      "K": {
+        "item": "rakit:plastik"
+      },
+      "P": {
+        "tag": "minecraft:planks"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "rakit:penampung_hujan",
+      "count": 1
+    }
+  }
+}

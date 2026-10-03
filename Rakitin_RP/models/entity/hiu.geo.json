@@ -1,0 +1,356 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.rakit.hiu",
+        "texture_width": 128,
+        "texture_height": 64,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "badan",
+          "pivot": [
+            0,
+            5,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                1,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                18
+              ],
+              "uv": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "kepala",
+          "pivot": [
+            0,
+            5,
+            -8
+          ],
+          "parent": "badan",
+          "cubes": [
+            {
+              "origin": [
+                -3.5,
+                1.5,
+                -15
+              ],
+              "size": [
+                7,
+                6,
+                7
+              ],
+              "uv": [
+                0,
+                26
+              ]
+            }
+          ]
+        },
+        {
+          "name": "moncong",
+          "pivot": [
+            0,
+            4,
+            -15
+          ],
+          "parent": "kepala",
+          "cubes": [
+            {
+              "origin": [
+                -2.5,
+                2.5,
+                -18
+              ],
+              "size": [
+                5,
+                4,
+                3
+              ],
+              "uv": [
+                28,
+                26
+              ]
+            }
+          ]
+        },
+        {
+          "name": "rahang",
+          "pivot": [
+            0,
+            2,
+            -9
+          ],
+          "parent": "kepala",
+          "cubes": [
+            {
+              "origin": [
+                -3,
+                0.5,
+                -16
+              ],
+              "size": [
+                6,
+                1,
+                7
+              ],
+              "uv": [
+                44,
+                26
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ekor1",
+          "pivot": [
+            0,
+            5,
+            10
+          ],
+          "parent": "badan",
+          "cubes": [
+            {
+              "origin": [
+                -3,
+                2,
+                10
+              ],
+              "size": [
+                6,
+                6,
+                8
+              ],
+              "uv": [
+                0,
+                40
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ekor2",
+          "pivot": [
+            0,
+            5,
+            18
+          ],
+          "parent": "ekor1",
+          "cubes": [
+            {
+              "origin": [
+                -1.5,
+                3,
+                18
+              ],
+              "size": [
+                3,
+                4,
+                6
+              ],
+              "uv": [
+                28,
+                40
+              ]
+            }
+          ]
+        },
+        {
+          "name": "sirip_ekor",
+          "pivot": [
+            0,
+            5,
+            23
+          ],
+          "parent": "ekor2",
+          "cubes": [
+            {
+              "origin": [
+                -0.5,
+                5,
+                21
+              ],
+              "size": [
+                1,
+                9,
+                4
+              ],
+              "uv": [
+                46,
+                40
+              ],
+              "rotation": [
+                -35,
+                0,
+                0
+              ],
+              "pivot": [
+                0,
+                5,
+                23
+              ]
+            },
+            {
+              "origin": [
+                -0.5,
+                -1,
+                21
+              ],
+              "size": [
+                1,
+                6,
+                3
+              ],
+              "uv": [
+                56,
+                40
+              ],
+              "rotation": [
+                35,
+                0,
+                0
+              ],
+              "pivot": [
+                0,
+                5,
+                23
+              ]
+            }
+          ]
+        },
+        {
+          "name": "sirip_punggung",
+          "pivot": [
+            0,
+            9,
+            0
+          ],
+          "parent": "badan",
+          "cubes": [
+            {
+              "origin": [
+                -0.5,
+                9,
+                -3
+              ],
+              "size": [
+                1,
+                8,
+                6
+              ],
+              "uv": [
+                52,
+                0
+              ],
+              "rotation": [
+                -30,
+                0,
+                0
+              ],
+              "pivot": [
+                0,
+                9,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "sirip_kiri",
+          "pivot": [
+            4,
+            2,
+            -3
+          ],
+          "parent": "badan",
+          "cubes": [
+            {
+              "origin": [
+                4,
+                1.5,
+                -6
+              ],
+              "size": [
+                8,
+                1,
+                5
+              ],
+              "uv": [
+                66,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                -25
+              ],
+              "pivot": [
+                4,
+                2,
+                -3
+              ]
+            }
+          ]
+        },
+        {
+          "name": "sirip_kanan",
+          "pivot": [
+            -4,
+            2,
+            -3
+          ],
+          "parent": "badan",
+          "cubes": [
+            {
+              "origin": [
+                -12,
+                1.5,
+                -6
+              ],
+              "size": [
+                8,
+                1,
+                5
+              ],
+              "uv": [
+                66,
+                6
+              ],
+              "rotation": [
+                0,
+                0,
+                25
+              ],
+              "pivot": [
+                -4,
+                2,
+                -3
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "resource_pack_name": "rakitin",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "rakit_plastik": {
+      "textures": "textures/items/plastik"
+    },
+    "rakit_daun_palem": {
+      "textures": "textures/items/daun_palem"
+    },
+    "rakit_besi_tua": {
+      "textures": "textures/items/besi_tua"
+    },
+    "rakit_gigi_hiu": {
+      "textures": "textures/items/gigi_hiu"
+    },
+    "rakit_daging_hiu_mentah": {
+      "textures": "textures/items/daging_hiu_mentah"
+    },
+    "rakit_daging_hiu_matang": {
+      "textures": "textures/items/daging_hiu_matang"
+    },
+    "rakit_botol_kosong": {
+      "textures": "textures/items/botol_kosong"
+    },
+    "rakit_air_laut": {
+      "textures": "textures/items/air_laut"
+    },
+    "rakit_air_bersih": {
+      "textures": "textures/items/air_bersih"
+    },
+    "rakit_tombak": {
+      "textures": "textures/items/tombak"
+    },
+    "rakit_buku_catatan": {
+      "textures": "textures/items/buku_catatan"
+    },
+    "rakit_pecahan_portal": {
+      "textures": "textures/items/pecahan_portal"
+    },
+    "rakit_inti_portal": {
+      "textures": "textures/items/inti_portal"
+    },
+    "rakit_kail_t1": {
+      "textures": "textures/items/kail_t1"
+    },
+    "rakit_kail_t2": {
+      "textures": "textures/items/kail_t2"
+    },
+    "rakit_kail_t3": {
+      "textures": "textures/items/kail_t3"
+    },
+    "rakit_kail_t4": {
+      "textures": "textures/items/kail_t4"
+    },
+    "rakit_kail_t5": {
+      "textures": "textures/items/kail_t5"
+    }
+  }
+}

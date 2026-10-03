@@ -1,0 +1,19 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "rakit:buku_catatan",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "rakit_buku_catatan",
+      "minecraft:display_name": {
+        "value": "item.rakit:buku_catatan.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "rakit:buku": {}
+    }
+  }
+}

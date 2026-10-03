@@ -1,0 +1,91 @@
+{
+  "format_version": "1.26.20",
+  "minecraft:block": {
+    "description": {
+      "identifier": "rakit:penyaring_air",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "rakit:isi": {
+          "values": {
+            "min": 0,
+            "max": 4
+          }
+        }
+      }
+    },
+    "components": {
+      "minecraft:display_name": "tile.rakit:penyaring_air.name",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "rakit_penyaring_samping",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "rakit_penyaring_atas_kosong",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "rakit_fondasi_rakit",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.2
+      },
+      "minecraft:tick": {
+        "interval_range": [
+          200,
+          200
+        ],
+        "looping": true
+      },
+      "rakit:penyaring": {}
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('rakit:isi') >= 1 && q.block_state('rakit:isi') <= 3",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_penyaring_samping",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "rakit_penyaring_atas_proses",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "rakit_fondasi_rakit",
+              "render_method": "opaque"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('rakit:isi') == 4",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_penyaring_samping",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "rakit_penyaring_atas_siap",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "rakit_fondasi_rakit",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:light_emission": 3
+        }
+      }
+    ]
+  }
+}

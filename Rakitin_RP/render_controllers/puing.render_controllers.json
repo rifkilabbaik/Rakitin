@@ -1,0 +1,17 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.rakit.puing": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Texture.default"],
+      "part_visibility": [
+        { "*": true },
+        { "papan": "q.property('rakit:jenis') == 0" },
+        { "plastik": "q.property('rakit:jenis') == 1" },
+        { "daun": "q.property('rakit:jenis') == 2" },
+        { "barel": "q.property('rakit:jenis') == 3" }
+      ]
+    }
+  }
+}

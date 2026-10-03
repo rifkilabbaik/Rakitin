@@ -1,0 +1,63 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Rakitin §bBP",
+    "description": "Bertahan hidup di lautan dengan rakit: haus, kail 5 tier, hiu, puing hanyut, layar, pulau, dan naga Ender.",
+    "uuid": "2a610fbc-92f1-4ffa-bcf9-8929c4026729",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "5174b9dc-69ec-4b0f-b5f3-61d4a8bb560d",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "74e2c6ee-4cf5-468e-bd11-adeead8e7029",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.4.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
+    },
+    {
+      "uuid": "61ef7b6e-3bce-4cac-888e-84693acde6da",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Rakitin"
+    ]
+  }
+}

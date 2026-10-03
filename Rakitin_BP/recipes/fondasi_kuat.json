@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "rakit:fondasi_kuat"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "rakit:fondasi_rakit"
+      },
+      {
+        "item": "rakit:besi_tua"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "rakit:fondasi_kuat",
+      "count": 1
+    }
+  }
+}

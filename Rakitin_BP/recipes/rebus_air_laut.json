@@ -1,0 +1,20 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "rakit:rebus_air_laut"
+    },
+    "unlock": [
+      {
+        "item": "rakit:air_laut"
+      }
+    ],
+    "tags": [
+      "furnace",
+      "campfire",
+      "soul_campfire"
+    ],
+    "input": "rakit:air_laut",
+    "output": "rakit:air_bersih"
+  }
+}

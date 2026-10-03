@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "rakit:puing",
+      "materials": { "default": "entity_alphatest" },
+      "textures": { "default": "textures/entity/puing" },
+      "geometry": { "default": "geometry.rakit.puing" },
+      "animations": {
+        "mengapung": "animation.rakit.puing.mengapung"
+      },
+      "scripts": {
+        "animate": ["mengapung"]
+      },
+      "render_controllers": ["controller.render.rakit.puing"],
+      "spawn_egg": {
+        "base_color": "#a0794a",
+        "overlay_color": "#7fc8e8"
+      }
+    }
+  }
+}

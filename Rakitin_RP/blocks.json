@@ -1,0 +1,28 @@
+{
+  "format_version": [
+    1,
+    1,
+    0
+  ],
+  "rakit:fondasi_rakit": {
+    "sound": "wood"
+  },
+  "rakit:fondasi_kuat": {
+    "sound": "metal"
+  },
+  "rakit:penyaring_air": {
+    "sound": "wood"
+  },
+  "rakit:penampung_hujan": {
+    "sound": "wood"
+  },
+  "rakit:pot_tanam": {
+    "sound": "wood"
+  },
+  "rakit:layar": {
+    "sound": "cloth"
+  },
+  "rakit:kemudi": {
+    "sound": "wood"
+  }
+}

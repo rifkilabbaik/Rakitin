@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "rakit:masak_daging_hiu"
+    },
+    "unlock": [
+      {
+        "item": "rakit:daging_hiu_mentah"
+      }
+    ],
+    "tags": [
+      "furnace",
+      "smoker",
+      "campfire",
+      "soul_campfire"
+    ],
+    "input": "rakit:daging_hiu_mentah",
+    "output": "rakit:daging_hiu_matang"
+  }
+}

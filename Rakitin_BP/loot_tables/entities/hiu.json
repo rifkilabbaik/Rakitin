@@ -1,0 +1,32 @@
+{
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "rakit:daging_hiu_mentah",
+          "weight": 1,
+          "functions": [
+            { "function": "set_count", "count": { "min": 1, "max": 3 } },
+            { "function": "looting_enchant", "count": { "min": 0, "max": 1 } }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "rakit:gigi_hiu",
+          "weight": 1,
+          "functions": [
+            { "function": "set_count", "count": { "min": 1, "max": 2 } },
+            { "function": "looting_enchant", "count": { "min": 0, "max": 1 } }
+          ]
+        }
+      ]
+    }
+  ]
+}

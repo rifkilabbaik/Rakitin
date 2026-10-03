@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "rakit:hiu",
+      "materials": { "default": "entity_alphatest" },
+      "textures": { "default": "textures/entity/hiu" },
+      "geometry": { "default": "geometry.rakit.hiu" },
+      "animations": {
+        "berenang": "animation.rakit.hiu.berenang"
+      },
+      "scripts": {
+        "animate": ["berenang"]
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#5b6d7c",
+        "overlay_color": "#dfe6ea"
+      }
+    }
+  }
+}

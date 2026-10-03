@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "rakit:botol_kosong_plastik"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "K K",
+      " K "
+    ],
+    "key": {
+      "K": {
+        "item": "rakit:plastik"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "rakit:botol_kosong",
+      "count": 2
+    }
+  }
+}

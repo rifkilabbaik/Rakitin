@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "rakit:inti_portal"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "PPP",
+      "PEP",
+      "PPP"
+    ],
+    "key": {
+      "P": {
+        "item": "rakit:pecahan_portal"
+      },
+      "E": {
+        "item": "minecraft:ender_eye"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "rakit:inti_portal",
+      "count": 1
+    }
+  }
+}

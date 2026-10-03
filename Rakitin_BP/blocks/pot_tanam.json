@@ -1,0 +1,250 @@
+{
+  "format_version": "1.26.20",
+  "minecraft:block": {
+    "description": {
+      "identifier": "rakit:pot_tanam",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "rakit:tahap": {
+          "values": {
+            "min": 0,
+            "max": 3
+          }
+        },
+        "rakit:jenis": {
+          "values": {
+            "min": 0,
+            "max": 3
+          }
+        }
+      }
+    },
+    "components": {
+      "minecraft:display_name": "tile.rakit:pot_tanam.name",
+      "minecraft:geometry": {
+        "identifier": "geometry.rakit.pot_tanam",
+        "bone_visibility": {
+          "tanaman": "q.block_state('rakit:tahap') > 0"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "rakit_pot_samping",
+          "render_method": "alpha_test"
+        },
+        "tanah": {
+          "texture": "rakit_pot_tanah",
+          "render_method": "alpha_test"
+        },
+        "tanaman": {
+          "texture": "rakit_tanaman_bibit",
+          "render_method": "alpha_test",
+          "face_dimming": false,
+          "ambient_occlusion": 0
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [
+          -7,
+          0,
+          -7
+        ],
+        "size": [
+          14,
+          8,
+          14
+        ]
+      },
+      "minecraft:selection_box": {
+        "origin": [
+          -7,
+          0,
+          -7
+        ],
+        "size": [
+          14,
+          14,
+          14
+        ]
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.6
+      },
+      "minecraft:tick": {
+        "interval_range": [
+          500,
+          900
+        ],
+        "looping": true
+      },
+      "rakit:pot": {}
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('rakit:tahap') == 1",
+        "components": {
+          "minecraft:geometry": {
+            "identifier": "geometry.rakit.pot_tanam",
+            "bone_visibility": {
+              "tanaman": "q.block_state('rakit:tahap') > 0"
+            }
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_pot_samping",
+              "render_method": "alpha_test"
+            },
+            "tanah": {
+              "texture": "rakit_pot_tanah",
+              "render_method": "alpha_test"
+            },
+            "tanaman": {
+              "texture": "rakit_tanaman_bibit",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('rakit:tahap') == 2",
+        "components": {
+          "minecraft:geometry": {
+            "identifier": "geometry.rakit.pot_tanam",
+            "bone_visibility": {
+              "tanaman": "q.block_state('rakit:tahap') > 0"
+            }
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_pot_samping",
+              "render_method": "alpha_test"
+            },
+            "tanah": {
+              "texture": "rakit_pot_tanah",
+              "render_method": "alpha_test"
+            },
+            "tanaman": {
+              "texture": "rakit_tanaman_tumbuh",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('rakit:tahap') == 3 && q.block_state('rakit:jenis') == 0",
+        "components": {
+          "minecraft:geometry": {
+            "identifier": "geometry.rakit.pot_tanam",
+            "bone_visibility": {
+              "tanaman": "q.block_state('rakit:tahap') > 0"
+            }
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_pot_samping",
+              "render_method": "alpha_test"
+            },
+            "tanah": {
+              "texture": "rakit_pot_tanah",
+              "render_method": "alpha_test"
+            },
+            "tanaman": {
+              "texture": "rakit_tanaman_gandum",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('rakit:tahap') == 3 && q.block_state('rakit:jenis') == 1",
+        "components": {
+          "minecraft:geometry": {
+            "identifier": "geometry.rakit.pot_tanam",
+            "bone_visibility": {
+              "tanaman": "q.block_state('rakit:tahap') > 0"
+            }
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_pot_samping",
+              "render_method": "alpha_test"
+            },
+            "tanah": {
+              "texture": "rakit_pot_tanah",
+              "render_method": "alpha_test"
+            },
+            "tanaman": {
+              "texture": "rakit_tanaman_kentang",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('rakit:tahap') == 3 && q.block_state('rakit:jenis') == 2",
+        "components": {
+          "minecraft:geometry": {
+            "identifier": "geometry.rakit.pot_tanam",
+            "bone_visibility": {
+              "tanaman": "q.block_state('rakit:tahap') > 0"
+            }
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_pot_samping",
+              "render_method": "alpha_test"
+            },
+            "tanah": {
+              "texture": "rakit_pot_tanah",
+              "render_method": "alpha_test"
+            },
+            "tanaman": {
+              "texture": "rakit_tanaman_wortel",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('rakit:tahap') == 3 && q.block_state('rakit:jenis') == 3",
+        "components": {
+          "minecraft:geometry": {
+            "identifier": "geometry.rakit.pot_tanam",
+            "bone_visibility": {
+              "tanaman": "q.block_state('rakit:tahap') > 0"
+            }
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "rakit_pot_samping",
+              "render_method": "alpha_test"
+            },
+            "tanah": {
+              "texture": "rakit_pot_tanah",
+              "render_method": "alpha_test"
+            },
+            "tanaman": {
+              "texture": "rakit_tanaman_bit",
+              "render_method": "alpha_test",
+              "face_dimming": false,
+              "ambient_occlusion": 0
+            }
+          }
+        }
+      }
+    ]
+  }
+}

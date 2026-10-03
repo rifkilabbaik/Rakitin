@@ -1,0 +1,71 @@
+{
+  "resource_pack_name": "rakitin",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "rakit_fondasi_rakit": {
+      "textures": "textures/blocks/fondasi_rakit"
+    },
+    "rakit_fondasi_kuat": {
+      "textures": "textures/blocks/fondasi_kuat"
+    },
+    "rakit_penyaring_samping": {
+      "textures": "textures/blocks/penyaring_samping"
+    },
+    "rakit_penyaring_atas_kosong": {
+      "textures": "textures/blocks/penyaring_atas_kosong"
+    },
+    "rakit_penyaring_atas_proses": {
+      "textures": "textures/blocks/penyaring_atas_proses"
+    },
+    "rakit_penyaring_atas_siap": {
+      "textures": "textures/blocks/penyaring_atas_siap"
+    },
+    "rakit_penampung_samping": {
+      "textures": "textures/blocks/penampung_samping"
+    },
+    "rakit_penampung_atas_kosong": {
+      "textures": "textures/blocks/penampung_atas_kosong"
+    },
+    "rakit_penampung_atas_sedikit": {
+      "textures": "textures/blocks/penampung_atas_sedikit"
+    },
+    "rakit_penampung_atas_penuh": {
+      "textures": "textures/blocks/penampung_atas_penuh"
+    },
+    "rakit_pot_samping": {
+      "textures": "textures/blocks/pot_samping"
+    },
+    "rakit_pot_tanah": {
+      "textures": "textures/blocks/pot_tanah"
+    },
+    "rakit_tanaman_bibit": {
+      "textures": "textures/blocks/tanaman_bibit"
+    },
+    "rakit_tanaman_tumbuh": {
+      "textures": "textures/blocks/tanaman_tumbuh"
+    },
+    "rakit_tanaman_gandum": {
+      "textures": "textures/blocks/tanaman_gandum"
+    },
+    "rakit_tanaman_kentang": {
+      "textures": "textures/blocks/tanaman_kentang"
+    },
+    "rakit_tanaman_wortel": {
+      "textures": "textures/blocks/tanaman_wortel"
+    },
+    "rakit_tanaman_bit": {
+      "textures": "textures/blocks/tanaman_bit"
+    },
+    "rakit_layar_kain": {
+      "textures": "textures/blocks/layar_kain"
+    },
+    "rakit_layar_tiang": {
+      "textures": "textures/blocks/layar_tiang"
+    },
+    "rakit_kemudi": {
+      "textures": "textures/blocks/kemudi"
+    }
+  }
+}

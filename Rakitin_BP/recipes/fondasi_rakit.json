@@ -1,0 +1,30 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "rakit:fondasi_rakit"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "PP",
+      "KK"
+    ],
+    "key": {
+      "P": {
+        "tag": "minecraft:planks"
+      },
+      "K": {
+        "item": "rakit:plastik"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "rakit:fondasi_rakit",
+      "count": 2
+    }
+  }
+}

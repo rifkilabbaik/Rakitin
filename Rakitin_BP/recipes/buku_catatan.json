@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "rakit:buku_catatan"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "rakit:daun_palem"
+      },
+      {
+        "item": "rakit:daun_palem"
+      },
+      {
+        "item": "minecraft:string"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "rakit:buku_catatan",
+      "count": 1
+    }
+  }
+}

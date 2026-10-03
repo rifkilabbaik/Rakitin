@@ -1,0 +1,116 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "rakit:hiu",
+      "is_spawnable": true,
+      "is_summonable": true
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": ["hiu", "aquatic", "monster", "mob"]
+      },
+      "minecraft:collision_box": {
+        "width": 1.2,
+        "height": 0.8
+      },
+      "minecraft:health": {
+        "value": 30,
+        "max": 30
+      },
+      "minecraft:attack": {
+        "damage": 5
+      },
+      "minecraft:movement": {
+        "value": 0.14
+      },
+      "minecraft:underwater_movement": {
+        "value": 0.2
+      },
+      "minecraft:movement.sway": {},
+      "minecraft:navigation.generic": {
+        "is_amphibious": true,
+        "can_path_over_water": false,
+        "can_swim": true,
+        "can_walk": false,
+        "can_breach": false,
+        "can_sink": false
+      },
+      "minecraft:jump.static": {},
+      "minecraft:breathable": {
+        "breathes_water": true,
+        "breathes_air": false,
+        "total_supply": 15,
+        "suffocate_time": 0,
+        "generates_bubbles": false
+      },
+      "minecraft:follow_range": {
+        "value": 24,
+        "max": 24
+      },
+      "minecraft:knockback_resistance": {
+        "value": 0.4
+      },
+      "minecraft:hurt_on_condition": {
+        "damage_conditions": [
+          {
+            "filters": { "test": "in_lava", "subject": "self", "operator": "==", "value": true },
+            "cause": "lava",
+            "damage_per_tick": 4
+          }
+        ]
+      },
+      "minecraft:loot": {
+        "table": "loot_tables/entities/hiu.json"
+      },
+      "minecraft:experience_reward": {
+        "on_death": "query.last_hit_by_player ? 10 : 0"
+      },
+      "minecraft:despawn": {
+        "despawn_from_distance": {
+          "min_distance": 64,
+          "max_distance": 96
+        }
+      },
+      "minecraft:behavior.hurt_by_target": {
+        "priority": 1
+      },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 2,
+        "must_see": false,
+        "reselect_targets": true,
+        "within_radius": 20,
+        "entity_types": [
+          {
+            "filters": {
+              "all_of": [
+                { "test": "is_family", "subject": "other", "value": "player" },
+                { "test": "in_water", "subject": "other", "value": true }
+              ]
+            },
+            "max_dist": 20
+          }
+        ]
+      },
+      "minecraft:behavior.melee_box_attack": {
+        "priority": 3,
+        "speed_multiplier": 1.6,
+        "track_target": true
+      },
+      "minecraft:behavior.random_swim": {
+        "priority": 6,
+        "interval": 20,
+        "xz_dist": 16,
+        "y_dist": 3
+      },
+      "minecraft:behavior.random_look_around": {
+        "priority": 8
+      },
+      "minecraft:is_hidden_when_invisible": {},
+      "minecraft:nameable": {},
+      "minecraft:physics": {},
+      "minecraft:pushable_by_entity": {},
+      "minecraft:conditional_bandwidth_optimization": {}
+    }
+  }
+}

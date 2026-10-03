@@ -1,0 +1,21 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "rakit:inti_portal",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "rakit_inti_portal",
+      "minecraft:display_name": {
+        "value": "item.rakit:inti_portal.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:rarity": "epic",
+      "minecraft:glint": true,
+      "rakit:inti_portal": {}
+    }
+  }
+}

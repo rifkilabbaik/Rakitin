@@ -1,0 +1,37 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "rakit:kail_t5"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "TNT",
+      "DKD",
+      "T T"
+    ],
+    "key": {
+      "T": {
+        "item": "rakit:gigi_hiu"
+      },
+      "N": {
+        "item": "minecraft:netherite_scrap"
+      },
+      "D": {
+        "item": "minecraft:diamond"
+      },
+      "K": {
+        "item": "rakit:kail_t4"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "rakit:kail_t5",
+      "count": 1
+    }
+  }
+}

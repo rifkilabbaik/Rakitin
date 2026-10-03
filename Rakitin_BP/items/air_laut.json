@@ -1,0 +1,33 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "rakit:air_laut",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "rakit_air_laut",
+      "minecraft:display_name": {
+        "value": "item.rakit:air_laut.name"
+      },
+      "minecraft:max_stack_size": 16,
+      "minecraft:food": {
+        "nutrition": 0,
+        "saturation_modifier": 0,
+        "can_always_eat": true,
+        "using_converts_to": "rakit:botol_kosong"
+      },
+      "minecraft:use_animation": "drink",
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.35
+      },
+      "rakit:minuman": {
+        "haus": 3,
+        "asin": true
+      }
+    }
+  }
+}
