@@ -1,0 +1,66 @@
+{
+  "format_version": "1.16.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.asta.demon_slayer",
+        "texture_width": 20,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "pedang",
+          "binding": "q.item_slot_to_bone_name(c.item_slot)",
+          "pivot": [
+            0.0,
+            24.0,
+            0.0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -5.0,
+                -0.5,
+                -0.125
+              ],
+              "size": [
+                10,
+                32,
+                0.25
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    20,
+                    64
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    20,
+                    0
+                  ],
+                  "uv_size": [
+                    -20,
+                    64
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

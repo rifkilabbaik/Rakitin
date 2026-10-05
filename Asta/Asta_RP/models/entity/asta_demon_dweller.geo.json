@@ -1,0 +1,66 @@
+{
+  "format_version": "1.16.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.asta.demon_dweller",
+        "texture_width": 16,
+        "texture_height": 56,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "pedang",
+          "binding": "q.item_slot_to_bone_name(c.item_slot)",
+          "pivot": [
+            0.0,
+            24.0,
+            0.0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.0,
+                0.0,
+                -0.125
+              ],
+              "size": [
+                8,
+                28,
+                0.25
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    56
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    16,
+                    0
+                  ],
+                  "uv_size": [
+                    -16,
+                    56
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
