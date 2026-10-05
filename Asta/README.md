@@ -8,7 +8,7 @@ Paket bertema **Asta** dari *Black Clover*:
 |---|---|
 | 🧍 **Skin Asta** | 64×64 (model klasik), rambut perak, ikat kepala, jubah Banteng Hitam, sabuk & sepatu cokelat. Bonus: skin **Asta Mode Iblis**. |
 | 🛡️ **Armor Penyatuan Iblis** | 4 item armor **baru dengan bentuk 3D sendiri** (wujud Devil Union, tanpa sayap): helm berambut runcing dengan **tanduk melingkar** & mata merah, zirah dengan lambang dada & **pelindung bahu berduri**, sarung tangan **bercakar**, celana dengan **ekor iblis** & duri lutut, sepatu bercakar. Armor Netherite vanilla tidak diubah. |
-| 🪽 **Elytra Sayap Iblis** | Sayap hitam compang-camping dengan tulang merah. **Menggantikan tampilan Elytra.** |
+| 🪽 **Elytra Sayap Iblis (3D)** | Model elytra diganti sayap iblis 3D: tulang sayap bercakar, jari sayap, selaput hitam robek berurat merah, lidah api hitam di atas sayap. Saat dipakai, **rambatan iblis** menjalar di badan, lengan kiri (hitam penuh + cakar merah), lengan kanan, sampai wajah. Item tetap elytra vanilla (tetap bisa terbang). |
 | ⚔️ **4 Pedang Iblis** | Item baru dengan model 3D di tangan (dipegang **di gagang**), **ukuran & kekuatan mengikuti lore**. |
 
 | | |
@@ -17,6 +17,8 @@ Paket bertema **Asta** dari *Black Clover*:
 | **Eksperimen** | Tidak perlu (Script API stabil `@minecraft/server` 2.4.0) |
 
 ---
+
+![Pratinjau elytra](docs/pratinjau_elytra.png)
 
 ## Pedang & Resep
 
@@ -88,7 +90,9 @@ Addon ini bisa dipasang bersama addon **Rakitin** (folder [`../raft`](../raft)).
 ## Catatan
 
 - Armor Penyatuan Iblis adalah item baru dengan model 3D sendiri (`Asta_RP/attachables/asta_iblis_*.json`).
-  Elytra tetap **pengganti tekstur** elytra vanilla.
+  Elytra memakai item vanilla, tetapi modelnya diganti lewat `Asta_RP/attachables/elytra.json`
+  (menimpa `minecraft:elytra`). Animasi bawaan (diam, jongkok, meluncur, tidur, berenang) tetap dipakai.
+  Karena menimpa elytra vanilla, **semua elytra** di dunia itu tampil sebagai sayap iblis.
 - Model pedang di tangan memakai animasi pegang **trident vanilla**. Pusat gagang diletakkan tepat di titik
   yang jatuh ke tangan pada animasi itu (`GRIP_Y = 13.3` di `tools/buat_asta.py`). Jika di perangkatmu masih
   meleset, ubah `GRIP_Y` (lebih kecil = pedang bergeser ke atas tangan) lalu jalankan ulang generator.
@@ -99,7 +103,7 @@ Addon ini bisa dipasang bersama addon **Rakitin** (folder [`../raft`](../raft)).
 
 ```
 Asta_Skin/   skin pack (manifest, skins.json, asta.png, asta_iblis.png)
-Asta_RP/     textures/asta/armor/iblis.png (tekstur armor 3D), elytra, ikon, sprite pedang,
+Asta_RP/     textures/asta/armor/iblis.png (tekstur armor 3D), textures/asta/elytra/iblis.png, ikon, sprite pedang,
              attachables/, models/entity/ (geometri armor & pedang), animations/, texts/
 Asta_BP/     items/ (4 pedang + 4 armor), recipes/ (8 resep shapeless),
              scripts/ (main.js, pedang.js = kekuatan pedang, armor.js = bonus set, util.js)
