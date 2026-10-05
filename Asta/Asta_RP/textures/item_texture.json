@@ -2,6 +2,18 @@
   "resource_pack_name": "asta",
   "texture_name": "atlas.items",
   "texture_data": {
+    "asta_iblis_helm": {
+      "textures": "textures/items/asta/iblis_helm"
+    },
+    "asta_iblis_zirah": {
+      "textures": "textures/items/asta/iblis_zirah"
+    },
+    "asta_iblis_celana": {
+      "textures": "textures/items/asta/iblis_celana"
+    },
+    "asta_iblis_sepatu": {
+      "textures": "textures/items/asta/iblis_sepatu"
+    },
     "asta_demon_destroyer": {
       "textures": "textures/items/asta/demon_destroyer"
     },
