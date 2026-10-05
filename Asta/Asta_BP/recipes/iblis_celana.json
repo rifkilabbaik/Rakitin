@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "asta:iblis_celana"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minecraft:netherite_leggings"
+      },
+      {
+        "item": "minecraft:crying_obsidian"
+      },
+      {
+        "item": "minecraft:redstone_block"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "asta:iblis_celana",
+      "count": 1
+    }
+  }
+}

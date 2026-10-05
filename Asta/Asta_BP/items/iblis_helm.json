@@ -2,39 +2,32 @@
   "format_version": "1.26.30",
   "minecraft:item": {
     "description": {
-      "identifier": "asta:demon_slayer",
+      "identifier": "asta:iblis_helm",
       "menu_category": {
-        "category": "equipment",
-        "group": "minecraft:itemGroup.name.sword"
+        "category": "equipment"
       }
     },
     "components": {
-      "minecraft:icon": "asta_demon_slayer",
+      "minecraft:icon": "asta_iblis_helm",
       "minecraft:display_name": {
-        "value": "item.asta:demon_slayer.name"
+        "value": "item.asta:iblis_helm.name"
       },
       "minecraft:max_stack_size": 1,
-      "minecraft:hand_equipped": true,
-      "minecraft:damage": 10,
+      "minecraft:wearable": {
+        "slot": "slot.armor.head",
+        "protection": 4
+      },
       "minecraft:durability": {
-        "max_durability": 2031
+        "max_durability": 520
       },
       "minecraft:enchantable": {
-        "slot": "sword",
+        "slot": "armor_head",
         "value": 15
-      },
-      "minecraft:can_destroy_in_creative": false,
-      "minecraft:cooldown": {
-        "category": "asta_demon_slayer",
-        "duration": 6
-      },
-      "asta:pedang": {
-        "jenis": "demon_slayer"
       },
       "minecraft:tags": {
         "tags": [
-          "minecraft:is_sword",
-          "minecraft:is_tool"
+          "minecraft:is_armor",
+          "asta:iblis"
         ]
       },
       "minecraft:repairable": {

@@ -24,6 +24,13 @@
         "value": 15
       },
       "minecraft:can_destroy_in_creative": false,
+      "minecraft:cooldown": {
+        "category": "asta_demon_dweller",
+        "duration": 2
+      },
+      "asta:pedang": {
+        "jenis": "demon_dweller"
+      },
       "minecraft:tags": {
         "tags": [
           "minecraft:is_sword",
