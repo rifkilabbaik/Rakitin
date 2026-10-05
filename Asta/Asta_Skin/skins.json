@@ -1,0 +1,18 @@
+{
+  "skins": [
+    {
+      "localization_name": "asta",
+      "geometry": "geometry.humanoid.custom",
+      "texture": "asta.png",
+      "type": "free"
+    },
+    {
+      "localization_name": "asta_iblis",
+      "geometry": "geometry.humanoid.custom",
+      "texture": "asta_iblis.png",
+      "type": "free"
+    }
+  ],
+  "serialize_name": "AstaBlackClover",
+  "localization_name": "AstaBlackClover"
+}

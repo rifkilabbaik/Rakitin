@@ -1,0 +1,44 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Asta §cBP",
+    "description": "4 pedang iblis Asta: pedang apa saja + ingot di meja kerajinan.",
+    "uuid": "8e63df46-074f-4ba6-b764-50761c5d9263",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "91df387d-3a25-43b7-a043-23004968a1ad",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Rakitin"
+    ]
+  },
+  "dependencies": [
+    {
+      "uuid": "99fd278e-fca4-443d-85b3-c81b3eecf5c7",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

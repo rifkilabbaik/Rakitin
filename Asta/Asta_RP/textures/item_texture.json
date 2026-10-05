@@ -1,0 +1,18 @@
+{
+  "resource_pack_name": "asta",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "asta_demon_destroyer": {
+      "textures": "textures/items/asta/demon_destroyer"
+    },
+    "asta_demon_dweller": {
+      "textures": "textures/items/asta/demon_dweller"
+    },
+    "asta_demon_slayer": {
+      "textures": "textures/items/asta/demon_slayer"
+    },
+    "asta_demon_slasher": {
+      "textures": "textures/items/asta/demon_slasher"
+    }
+  }
+}
