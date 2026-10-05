@@ -984,6 +984,23 @@ def pratinjau(skin, berarmor, sayap, sprites):
     return img
 
 
+def pratinjau_elytra(skin, tex, kubus, S=8):
+    """Elytra iblis tampak depan & belakang (posisi diam, tanpa animasi)."""
+    badan = [k for k in kubus if not k[0].endswith("_wing")]
+    # sayap digeser sedikit ke luar seperti posisi diam di game
+    sayap = [(k[0], [k[1][0] + (-3 if k[0] == "left_wing" else 3), k[1][1] + 2, k[1][2]], *k[2:])
+             for k in kubus if k[0].endswith("_wing")]
+    depan = render_orto(render_depan(skin), tex, badan, "depan", S)
+    belakang = render_orto(render_belakang(skin), tex, badan + sayap, "belakang", S)
+    img = Image.new("RGBA", (depan.width * 2 + 3 * 20, depan.height + 60), hex2rgb("#e9e4dc"))
+    img.alpha_composite(depan, (20, 40))
+    img.alpha_composite(belakang, (depan.width + 40, 40))
+    dr = ImageDraw.Draw(img)
+    dr.text((20, 12), "Depan: rambatan iblis di badan, lengan & wajah (sayap disembunyikan)", fill=(30, 30, 30, 255))
+    dr.text((depan.width + 40, 12), "Belakang (sayap 3D, posisi diam)", fill=(30, 30, 30, 255))
+    return img
+
+
 def ikon_pack(skin, a1=None, latar="#1a1a1e"):
     kep = render_depan(skin, a1).crop((4, 0, 12, 8)).resize((96, 96), Image.NEAREST)
     img = Image.new("RGBA", (128, 128), hex2rgb(latar))
@@ -1259,15 +1276,16 @@ def lukis_gaya(img, u, v, w, h, d, gaya):
 class Penata:
     """Penempatan UV sederhana (rak) untuk kubus tambahan."""
 
-    def __init__(self, x=0, y=26):
+    def __init__(self, x=0, y=26, ukuran=ARMOR_TEX):
         self.x, self.y, self.t = x, y, 0
+        self.ukuran = ukuran
 
     def tempat(self, w, h, d):
         fw, fh = 2 * (w + d), d + h
-        if self.x + fw > ARMOR_TEX[0]:
+        if self.x + fw > self.ukuran[0]:
             self.x, self.y, self.t = 0, self.y + self.t, 0
         u, v = self.x, self.y
-        assert v + fh <= ARMOR_TEX[1], "tekstur armor penuh"
+        assert v + fh <= self.ukuran[1], "tekstur penuh"
         self.x += fw
         self.t = max(self.t, fh)
         return u, v
@@ -1540,6 +1558,325 @@ def render_armor_depan(skin, tex, daftar_kubus, S=8):
 
 
 # ===========================================================================
+# 8. Elytra 3D: sayap iblis + rambatan iblis di badan (mengganti model elytra)
+# ===========================================================================
+ELYTRA_TEX = (128, 128)
+ELYTRA_TEXTURE = "textures/asta/elytra/iblis"
+
+
+def warna(c, f=0.06):
+    return ubah(PALET[c], 1 + random.uniform(-f, f))
+
+
+def muka_selaput(w, h, rnd):
+    """Selaput sayap: hitam, urat merah, tepi bawah robek & berlubang."""
+    m = [["D"] * w for _ in range(h)]
+    for x in range(w):
+        robek = rnd.randint(0, min(6, h // 3))
+        for y in range(h - robek, h):
+            m[y][x] = "."
+        if h - robek - 1 >= 0 and rnd.random() < 0.6:
+            m[h - robek - 1][x] = "x"
+    for _ in range(max(1, h // 8)):  # lubang kecil
+        hx, hy = rnd.randrange(w), rnd.randrange(h // 2, h)
+        m[hy][hx] = "."
+    # urat merah diagonal dari atas
+    x = rnd.randrange(w)
+    for y in range(h):
+        if m[y][x] != ".":
+            m[y][x] = "x" if rnd.random() < 0.7 else "X"
+        if rnd.random() < 0.35:
+            x = max(0, min(w - 1, x + rnd.choice((-1, 1))))
+    for y in range(h):
+        for x in range(w):
+            if m[y][x] == "D" and rnd.random() < 0.2:
+                m[y][x] = "d"
+    return m
+
+
+def muka_api(w, h, rnd):
+    """Lidah api hitam (seperti ujung sayap di gambar) dengan inti merah."""
+    m = [["."] * w for _ in range(h)]
+    for y in range(h):
+        lebar = max(1, round(w * (y + 1) / h))
+        x0 = (w - lebar) // 2 + (rnd.choice((0, 1)) if lebar < w else 0)
+        for x in range(x0, min(w, x0 + lebar)):
+            m[y][x] = "D"
+    for y in range(h // 2, h):
+        m[y][w // 2] = "X" if rnd.random() < 0.6 else "x"
+    return m
+
+
+def muka_rambatan(w, h, rnd, solid, sulur, merah=0.07):
+    """Rambatan iblis: area hitam pejal dari atas + sulur yang menjalar ke bawah.
+
+    solid = (min, maks) kedalaman area pejal dari tepi atas.
+    sulur = jumlah sulur yang menjalar."""
+    m = [["."] * w for _ in range(h)]
+    dalam = [rnd.randint(*solid) for _ in range(w)]
+    for x in range(w):
+        for y in range(min(h, dalam[x])):
+            m[y][x] = "D" if rnd.random() > 0.2 else "d"
+    for _ in range(sulur):
+        x = rnd.randrange(w)
+        y = min(h - 1, dalam[x])
+        panjang = rnd.randint(h // 3, h)
+        for _i in range(panjang):
+            if y >= h:
+                break
+            m[y][x] = "X" if rnd.random() < 0.15 else "D"
+            y += 1
+            if rnd.random() < 0.4:
+                x = max(0, min(w - 1, x + rnd.choice((-1, 1))))
+    # retakan merah menyala di area pejal
+    for y in range(h):
+        for x in range(w):
+            if m[y][x] in "Dd" and rnd.random() < merah:
+                m[y][x] = "X"
+    return m
+
+
+def lukis_matriks(img, x0, y0, m):
+    for y, baris in enumerate(m):
+        for x, c in enumerate(baris):
+            img.putpixel((x0 + x, y0 + y), warna(c) if c != "." else KOSONG)
+
+
+def lukis_gaya_elytra(img, u, v, w, h, d, gaya, rnd):
+    pos = kotak_uv(u, v, w, h, d)
+    for nama, (x0, y0, fw, fh) in pos.items():
+        if gaya == "selaput":
+            m = muka_selaput(fw, fh, rnd) if nama in ("depan", "belakang") else [["D"] * fw for _ in range(fh)]
+        elif gaya == "api":
+            m = muka_api(fw, fh, rnd) if nama in ("depan", "belakang") else [["."] * fw for _ in range(fh)]
+        elif gaya == "tulang":
+            m = [["x" if (y == 0 and nama not in ("atas", "bawah") and rnd.random() < 0.5) else rnd.choice("DDDd") for _x in range(fw)] for y in range(fh)]
+        elif gaya == "merah":
+            m = [["x" if rnd.random() < 0.3 else "X" for _x in range(fw)] for _y in range(fh)]
+        elif gaya == "rambat_penuh":
+            m = muka_rambatan(fw, fh, rnd, (fh, fh), 0, 0.1)
+            if nama == "bawah":
+                m = [["D"] * fw for _ in range(fh)]
+        elif gaya == "rambat_badan":
+            if nama in ("atas",):
+                m = [["D"] * fw for _ in range(fh)]
+            elif nama == "bawah":
+                m = [["."] * fw for _ in range(fh)]
+            else:
+                m = muka_rambatan(fw, fh, rnd, (fh // 3, fh // 2 + 2), max(2, fw // 2))
+        elif gaya == "rambat_tipis":
+            if nama == "atas":
+                m = [["D"] * fw for _ in range(fh)]
+            elif nama == "bawah":
+                m = [["."] * fw for _ in range(fh)]
+            else:
+                m = muka_rambatan(fw, fh, rnd, (1, 3), 2, 0.05)
+        elif gaya == "rambat_wajah":
+            m = [["."] * fw for _ in range(fh)]
+            if nama == "depan":
+                pola = [
+                    "........",
+                    "........",
+                    "......D.",
+                    ".....DXD",
+                    ".DX..XD.",
+                    ".....D.D",
+                    "......D.",
+                    "....DD.D",
+                ]
+                m = [list(b) for b in pola]
+            elif nama == "kiri":  # sisi kiri kepala Asta (lengan iblis)
+                m = muka_rambatan(fw, fh, rnd, (0, 0), 3, 0)
+                m = m[::-1]  # menjalar dari leher ke atas
+            elif nama == "bawah":
+                m = [["D"] * fw for _ in range(fh)]
+        else:
+            m = [[rnd.choice("DDd") for _x in range(fw)] for _y in range(fh)]
+        lukis_matriks(img, x0, y0, m)
+
+
+# (bone, origin, size, gaya, inflate)
+SAYAP_KIRI = [
+    # tulang lengan sayap (naik ke luar) + cakar di ujung
+    ("left_wing", [-6, 19, 0.5], [6, 2, 1], "tulang", 0),
+    ("left_wing", [-11, 20, 0.5], [5, 2, 1], "tulang", 0),
+    ("left_wing", [-15, 21, 0.5], [4, 2, 1], "tulang", 0),
+    ("left_wing", [-16, 23, 0.5], [1, 3, 1], "merah", 0),
+    ("left_wing", [-9, 22, 0.5], [1, 2, 1], "tulang", 0),
+    ("left_wing", [-13, 23, 0.5], [1, 2, 1], "tulang", 0),
+    # jari sayap (bertingkat ke bawah & ke luar)
+    ("left_wing", [-15.5, 17, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-16.0, 13, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-16.5, 9, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-17.0, 5, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-11.0, 16, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-11.5, 12, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-12.0, 8, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-12.5, 4, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-13.0, 0, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-6.0, 15, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-6.5, 11, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-7.0, 7, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-7.5, 3, 0.5], [1, 4, 1], "tulang", 0),
+    # selaput robek di antara jari
+    ("left_wing", [-17, 2, 0.75], [6, 19, 0.5], "selaput", 0),
+    ("left_wing", [-11, -1, 0.75], [5, 21, 0.5], "selaput", 0),
+    ("left_wing", [-6, 3, 0.75], [4, 16, 0.5], "selaput", 0),
+    ("left_wing", [-2, 8, 0.75], [2, 11, 0.5], "selaput", 0),
+    # lidah api hitam di atas sayap
+    ("left_wing", [-4, 21, 0.75], [2, 3, 0.5], "api", 0),
+    ("left_wing", [-8, 22, 0.75], [2, 4, 0.5], "api", 0),
+    ("left_wing", [-12, 23, 0.75], [2, 3, 0.5], "api", 0),
+    ("left_wing", [-15, 24, 0.75], [1, 3, 0.5], "api", 0),
+]
+
+RAMBATAN = [
+    ("body", [-4, 12, -2], [8, 12, 4], "rambat_badan", 0.3),
+    ("body", [-0.5, 20, 2.3], [1, 2, 1], "merah", 0),
+    ("body", [-0.5, 16, 2.3], [1, 2, 1], "merah", 0),
+    ("head", [-4, 24, -4], [8, 8, 8], "rambat_wajah", 0.3),
+    ("rightArm", [-8, 12, -2], [4, 12, 4], "rambat_tipis", 0.3),
+    ("leftArm", [4, 12, -2], [4, 12, 4], "rambat_penuh", 0.3),
+    ("leftArm", [6.5, 9, -2.5], [1, 2, 1], "merah", 0),
+    ("leftArm", [6.5, 9, -0.5], [1, 2, 1], "merah", 0),
+    ("leftArm", [6.5, 9, 1.5], [1, 2, 1], "merah", 0),
+]
+
+
+def elytra_iblis():
+    """Kembalikan (tekstur, geometri JSON, kubus untuk pratinjau)."""
+    rnd = random.Random(1717)
+    img = kanvas(*ELYTRA_TEX)
+    penata = Penata(0, 0, ELYTRA_TEX)
+    tulang = {}
+    pr = []
+
+    def tambah(bone, origin, size, uv, inf, mirror=False):
+        c = {"origin": origin, "size": size, "uv": list(uv)}
+        if inf:
+            c["inflate"] = inf
+        if mirror:
+            c["mirror"] = True
+        tulang.setdefault(bone, []).append(c)
+        pr.append((bone, origin, size, uv, inf, mirror))
+
+    for bone, origin, size, gaya, inf in SAYAP_KIRI + RAMBATAN:
+        u, v = penata.tempat(*size_int(size))
+        lukis_gaya_elytra(img, u, v, *size_int(size), gaya, rnd)
+        tambah(bone, origin, size, (u, v), inf)
+        if bone == "left_wing":  # sayap kanan = cermin sayap kiri
+            tambah("right_wing", cermin_x(origin, size), size, (u, v), inf, True)
+
+    susunan = [
+        ("body", None, [0, 24, 0]),
+        ("head", "body", [0, 24, 0]),
+        ("rightArm", "body", [-5, 22, 0]),
+        ("leftArm", "body", [5, 22, 0]),
+        ("left_wing", "body", [0, 24, 0]),
+        ("right_wing", "body", [0, 24, 0]),
+    ]
+    bones = []
+    for nama, induk_, pivot in susunan:
+        b = {"name": nama, "pivot": pivot}
+        if induk_:
+            b["parent"] = induk_
+        if nama in tulang:
+            b["cubes"] = tulang[nama]
+        bones.append(b)
+    geo = {
+        "format_version": "1.16.0",
+        "minecraft:geometry": [{
+            "description": {
+                "identifier": "geometry.asta.elytra_iblis",
+                "texture_width": ELYTRA_TEX[0], "texture_height": ELYTRA_TEX[1],
+                "visible_bounds_width": 5, "visible_bounds_height": 4,
+                "visible_bounds_offset": [0, 1.5, 0],
+            },
+            "bones": bones,
+        }],
+    }
+    return img, geo, pr
+
+
+def attachable_elytra_json():
+    # Menimpa attachable vanilla "minecraft:elytra": model diganti, animasi
+    # bawaan (diam, jongkok, meluncur, tidur, berenang) tetap dipakai karena
+    # nama tulang sayap sama (body, left_wing, right_wing).
+    return {
+        "format_version": "1.10.0",
+        "minecraft:attachable": {
+            "description": {
+                "identifier": "minecraft:elytra",
+                "materials": {"default": "armor", "enchanted": "armor_enchanted"},
+                "textures": {"default": ELYTRA_TEXTURE, "enchanted": "textures/misc/enchanted_actor_glint"},
+                "geometry": {"default": "geometry.asta.elytra_iblis"},
+                "animations": {
+                    "default_controller": "controller.animation.elytra.default",
+                    "default": "animation.elytra.default",
+                    "gliding": "animation.elytra.gliding",
+                    "sneaking": "animation.elytra.sneaking",
+                    "sleeping": "animation.elytra.sleeping",
+                    "swimming": "animation.elytra.swimming",
+                },
+                "scripts": {"parent_setup": "variable.chest_layer_visible = 0.0;", "animate": ["default_controller"]},
+                "render_controllers": ["controller.render.armor"],
+            }
+        },
+    }
+
+
+def render_belakang(skin):
+    """Gambar 16x32 tampak belakang skin (kiri layar = sisi kiri pemain)."""
+    img = Image.new("RGBA", (16, 32), (0, 0, 0, 0))
+
+    def tempel(u, v, w, h, d, x, y):
+        x0, y0, fw, fh = kotak_uv(u, v, w, h, d)["belakang"]
+        f = skin.crop((x0, y0, x0 + fw, y0 + fh))
+        f.putalpha(f.split()[3].point(lambda a: 255 if a else 0))
+        img.alpha_composite(f, (x, y))
+
+    for base, lap in (((0, 0, 8, 8, 8), (32, 0, 8, 8, 8)),):
+        tempel(*base, 4, 0)
+        tempel(*lap, 4, 0)
+    tempel(16, 16, 8, 12, 4, 4, 8)
+    tempel(16, 32, 8, 12, 4, 4, 8)
+    tempel(32, 48, 4, 12, 4, 0, 8)   # lengan kiri
+    tempel(48, 48, 4, 12, 4, 0, 8)
+    tempel(40, 16, 4, 12, 4, 12, 8)  # lengan kanan
+    tempel(16, 48, 4, 12, 4, 4, 20)  # kaki kiri
+    tempel(0, 48, 4, 12, 4, 4, 20)
+    tempel(0, 16, 4, 12, 4, 8, 20)   # kaki kanan
+    tempel(0, 32, 4, 12, 4, 8, 20)
+    return img
+
+
+def render_orto(dasar, tex, kubus, sisi="depan", S=8, lebar=40, atas=39, tinggi=46):
+    """Proyeksi ortografis sederhana (rotasi kubus diabaikan).
+
+    dasar: gambar skin 16x32 dari sisi yang sama. Kanvas: x -lebar/2..lebar/2,
+    y dari `atas` ke `atas - tinggi`."""
+    img = Image.new("RGBA", (lebar * S, tinggi * S), (0, 0, 0, 0))
+    img.alpha_composite(dasar.resize((16 * S, 32 * S), Image.NEAREST), ((lebar // 2 - 8) * S, (atas - 32) * S))
+    if sisi == "depan":
+        urut = sorted(kubus, key=lambda k: -(k[1][2] - k[4]))
+    else:
+        urut = sorted(kubus, key=lambda k: k[1][2] + k[2][2] + k[4])
+    for _bone, origin, size, uv, inf, mirror in urut:
+        w, h, d = size_int(size)
+        x0, y0, fw, fh = kotak_uv(uv[0], uv[1], w, h, d)[sisi]
+        muka = tex.crop((x0, y0, x0 + fw, y0 + fh))
+        if mirror:
+            muka = muka.transpose(Image.FLIP_LEFT_RIGHT)
+        pw, ph = (size[0] + 2 * inf) * S, (size[1] + 2 * inf) * S
+        muka = muka.resize((max(1, round(pw)), max(1, round(ph))), Image.NEAREST)
+        muka.putalpha(muka.split()[3].point(lambda a: 255 if a else 0))
+        kiri = origin[0] - inf if sisi == "depan" else -(origin[0] + size[0] + inf)
+        ty = origin[1] + size[1] + inf
+        img.alpha_composite(muka, (round((kiri + lebar / 2) * S), round((atas - ty) * S)))
+    return img
+
+
+# ===========================================================================
 # Utama
 # ===========================================================================
 def main():
@@ -1570,7 +1907,14 @@ def main():
                  "textures/items/netherite_leggings.png", "textures/items/netherite_boots.png"):
         if os.path.exists(os.path.join(RP, lama)):
             os.remove(os.path.join(RP, lama))
-    simpan(sayap, RP, "textures", "models", "armor", "elytra.png")
+    # elytra 3D: model vanilla diganti lewat attachable "minecraft:elytra"
+    lama = os.path.join(RP, "textures", "models", "armor", "elytra.png")
+    if os.path.exists(lama):
+        os.remove(lama)
+    tex_elytra, geo_elytra, kubus_elytra = elytra_iblis()
+    simpan(tex_elytra, RP, ELYTRA_TEXTURE + ".png")
+    tulis_json(geo_elytra, RP, "models", "entity", "asta_elytra_iblis.geo.json")
+    tulis_json(attachable_elytra_json(), RP, "attachables", "elytra.json")
     simpan(ikon_grid(IKON_VANILLA["elytra"]), RP, "textures", "items", "elytra.png")
 
     tekstur_item = {}
@@ -1627,6 +1971,7 @@ def main():
     # ---------------- dokumentasi ----------------
     berarmor = render_armor_depan(skin, tex_armor, list(kubus_armor.values()))
     simpan(pratinjau(skin, berarmor, sayap, sprites), DOCS, "pratinjau.png")
+    simpan(pratinjau_elytra(skin, tex_elytra, kubus_elytra), DOCS, "pratinjau_elytra.png")
     simpan(skin.resize((256, 256), Image.NEAREST), DOCS, "skin_asta_x4.png")
     lembar = Image.new("RGBA", (len(sprites) * 40, 40), hex2rgb("#e9e4dc"))
     for i, (id_, *_r) in enumerate(PEDANG):
