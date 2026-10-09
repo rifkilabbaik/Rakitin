@@ -1,0 +1,354 @@
+{
+  "format_version": "1.16.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.waguri.saku",
+        "texture_width": 128,
+        "texture_height": 128,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "waist",
+          "pivot": [
+            0,
+            12,
+            0
+          ],
+          "parent": "root"
+        },
+        {
+          "name": "body",
+          "pivot": [
+            0,
+            24,
+            0
+          ],
+          "parent": "waist",
+          "cubes": [
+            {
+              "origin": [
+                -1,
+                23.5,
+                -1
+              ],
+              "size": [
+                2,
+                1,
+                2
+              ],
+              "uv": [
+                99,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                12,
+                -2
+              ],
+              "size": [
+                8,
+                12,
+                4
+              ],
+              "uv": [
+                0,
+                18
+              ]
+            }
+          ]
+        },
+        {
+          "name": "head",
+          "pivot": [
+            0,
+            24,
+            0
+          ],
+          "parent": "body",
+          "cubes": [
+            {
+              "origin": [
+                -4.5,
+                23.5,
+                -4.5
+              ],
+              "size": [
+                9,
+                9,
+                9
+              ],
+              "uv": [
+                0,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -4.75,
+                28.5,
+                -5.0
+              ],
+              "size": [
+                9.5,
+                4,
+                1
+              ],
+              "uv": [
+                36,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -5.2,
+                24,
+                -3.5
+              ],
+              "size": [
+                1,
+                6,
+                5
+              ],
+              "uv": [
+                67,
+                0
+              ]
+            },
+            {
+              "origin": [
+                4.2,
+                24,
+                -3.5
+              ],
+              "size": [
+                1,
+                6,
+                5
+              ],
+              "uv": [
+                67,
+                0
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -4.5,
+                24.5,
+                4.0
+              ],
+              "size": [
+                9,
+                7,
+                1
+              ],
+              "uv": [
+                79,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "rightArm",
+          "pivot": [
+            -5,
+            22,
+            0
+          ],
+          "parent": "body",
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                12,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                24,
+                18
+              ]
+            }
+          ]
+        },
+        {
+          "name": "rightItem",
+          "pivot": [
+            -5.5,
+            14,
+            1
+          ],
+          "parent": "rightArm"
+        },
+        {
+          "name": "leftArm",
+          "pivot": [
+            5,
+            22,
+            0
+          ],
+          "parent": "body",
+          "cubes": [
+            {
+              "origin": [
+                4,
+                12,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                24,
+                18
+              ],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "leftItem",
+          "pivot": [
+            5.5,
+            14,
+            1
+          ],
+          "parent": "leftArm"
+        },
+        {
+          "name": "rightLeg",
+          "pivot": [
+            -1.9,
+            12,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -3.9,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                40,
+                18
+              ]
+            }
+          ]
+        },
+        {
+          "name": "leftLeg",
+          "pivot": [
+            1.9,
+            12,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -0.10000000000000009,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                40,
+                18
+              ],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "rambut",
+          "pivot": [
+            0,
+            31,
+            4.5
+          ],
+          "parent": "head"
+        },
+        {
+          "name": "rok",
+          "pivot": [
+            0,
+            12,
+            0
+          ],
+          "parent": "waist"
+        },
+        {
+          "name": "kelopak",
+          "pivot": [
+            0,
+            26.5,
+            -4.6
+          ],
+          "parent": "head",
+          "cubes": [
+            {
+              "origin": [
+                -4.5,
+                25.0,
+                -4.6
+              ],
+              "size": [
+                9,
+                3,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    58,
+                    0
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
