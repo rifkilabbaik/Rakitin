@@ -10,7 +10,6 @@ import { EMOTE, MODEL } from "./data.js";
 const PROP_MODEL = "waguri:model";
 const PROP_EMOTE = "waguri:emote";
 const PROP_SUDAH_DAPAT = "waguri:lemari_diberikan";
-const LAMA_EMOTE = 70; // tick (3,5 detik)
 
 /** @param {import("@minecraft/server").Player} player */
 function modelSekarang(player) {
@@ -35,17 +34,17 @@ function pakaiModel(player, indeks) {
 const giliranEmote = new Map(); // player.id -> nomor urut emote terakhir
 
 /** @param {import("@minecraft/server").Player} player */
-function putarEmote(player, id) {
+function putarEmote(player, emote) {
   if (modelSekarang(player) === 0) {
     player.onScreenDisplay.setActionBar("§7Pilih model dulu untuk memakai emote.");
     return;
   }
   const urut = (giliranEmote.get(player.id) ?? 0) + 1;
   giliranEmote.set(player.id, urut);
-  player.setProperty(PROP_EMOTE, id);
+  player.setProperty(PROP_EMOTE, emote.id);
   system.runTimeout(() => {
     if (player.isValid && giliranEmote.get(player.id) === urut) player.setProperty(PROP_EMOTE, 0);
-  }, LAMA_EMOTE);
+  }, emote.lama ?? 70);
 }
 
 /** @param {import("@minecraft/server").Player} player */
@@ -56,7 +55,7 @@ function menuEmote(player) {
   f.show(player).then((r) => {
     if (r.canceled || r.selection === undefined) return;
     if (r.selection >= EMOTE.length) return menuModel(player);
-    putarEmote(player, EMOTE[r.selection].id);
+    putarEmote(player, EMOTE[r.selection]);
   });
 }
 

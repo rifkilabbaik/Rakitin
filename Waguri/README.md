@@ -11,10 +11,12 @@ membuat ulang idenya memakai fitur addon resmi:
 | Ganti tubuh pemain dengan model 3D | Client entity pemain ditimpa; bila model dipilih, render skin vanilla dimatikan dan geometri model digambar |
 | Pilih model sendiri | Item **Lemari Model** → menu pilihan (Script API + server-ui) |
 | Terlihat oleh pemain lain | Pilihan disimpan sebagai *property* pemain `waguri:model` yang disinkronkan ke semua klien |
-| Animasi vanilla tetap jalan | Nama & pivot tulang sama dengan skin vanilla → jalan, lari, jongkok, renang, tidur, serang, pegang item, busur, crossbow, perisai, dll. |
-| Animasi ekstra | Kedip mata, rambut & rok bergoyang, napas, tinggi badan sesuai karakter |
-| Emote | Melambai, membungkuk (*ojigi*), makan kue, lompat senang |
-| Tekstur HD | 2 piksel per unit (lebih halus dari skin biasa) |
+| Animasi vanilla tetap jalan | Nama & pivot tulang utama sama dengan skin vanilla → jalan, lari, jongkok, renang, tidur, serang, pegang item, busur, crossbow, perisai, dll. |
+| Model detail | Ratusan kubus per karakter: rambut berhelai-helai berlapis, poni runcing, mata terpisah, kerah/pita/kancing/sepatu 3D, rok berlipit |
+| Tulang ekstra | Siku (`rightForearm`/`leftForearm`), lutut (`rightShin`/`leftShin`), tulang fisika rambut, ekor kuda, ahoge, rok (4 panel), pita, tudung, serta tulang wajah (mata, kelopak, alis, ekspresi) |
+| Animasi ekstra | Kedip, ekspresi senang `^ ^`, siku & lutut menekuk saat berjalan, rambut/ekor kuda/rok/pita bergoyang mengikuti gerak & kepala, napas, tinggi badan sesuai karakter |
+| Emote | Melambai, membungkuk (*ojigi*), makan kue, lompat senang, pose damai (V), duduk |
+| Tekstur HD | 4 piksel per unit (4x lebih tajam dari skin biasa), satu tekstur per karakter |
 
 | | |
 |---|---|
@@ -69,18 +71,28 @@ Waguri_RP/   entity/player.entity.json, render_controllers/waguri.render_control
              models/entity/waguri_*.geo.json, animations/waguri.animation.json,
              textures/entity/waguri/*.png (tekstur HD per karakter)
 tools/
-  buat_waguri.py   generator semua model, tekstur, animasi & JSON
+  inti.py          kerangka model: tulang standar, pembangun kubus, kuas tekstur HD,
+                   mata anime, penata UV, perender 3D pratinjau, pemeriksa teknis
+  karakter/        satu modul per karakter (fungsi buat() -> daftar Model)
+  pratinjau.py     render satu karakter dari 5 sudut + close-up wajah ke docs/render/
+  buat_waguri.py   generator paket: geometri, tekstur, animasi, render controller, BP/RP
   vanilla/         salinan file pemain vanilla (dasar yang dimodifikasi)
   build.sh         membuat dist/Waguri_YSM.mcaddon
+docs/
+  pratinjau.png    jajaran semua karakter
+  karakter/*.png   lembar render tiap karakter (depan, 3/4, samping, belakang, wajah)
 ```
 
 ```bash
 cd Waguri
-pip install pillow
-python3 tools/buat_waguri.py
+pip install pillow numpy
+python3 tools/pratinjau.py kaoruko   # cek satu karakter saat mengedit
+python3 tools/buat_waguri.py         # bangun seluruh paket
 ./tools/build.sh
 ```
 
-Menambah karakter baru: buat fungsi seperti `ayato()` di `buat_waguri.py` (pakai `kepala()`,
-`tubuh_putri()`/`tubuh_putra()`, `seragam_kikyo()`/`gakuran()`), daftarkan di `semua_model()`, lalu jalankan
-generator. Menu, render controller, skala, dan property otomatis menyesuaikan.
+**Menambah karakter baru:** buat `tools/karakter/<nama>.py` dengan fungsi `buat()` yang mengembalikan
+`inti.Model` (lihat `tools/karakter/_contoh.py` untuk contoh minimal dan docstring `tools/inti.py` untuk konvensi
+koordinat & tulang), daftarkan di `DAFTAR_MODUL` pada `tools/karakter/__init__.py`, lalu jalankan generator.
+Menu, render controller, skala, dan property otomatis menyesuaikan. Urutan `DAFTAR_MODUL` menentukan nomor model
+yang tersimpan di dunia, jadi tambahkan karakter baru di akhir daftar.
