@@ -1,0 +1,1984 @@
+"""Generator paket Asta (Black Clover) untuk Minecraft Bedrock.
+
+Membuat:
+  Asta_Skin/  skin pack Asta (64x64, model klasik Steve)
+  Asta_RP/    resource pack: armor Demon (menggantikan tekstur armor Netherite),
+              elytra sayap iblis, 4 pedang iblis (ikon + model 3D ukuran besar)
+  Asta_BP/    behavior pack: 4 item pedang + resep (pedang apa saja + ingot)
+  docs/       gambar pratinjau
+
+Semua gambar dibuat secara prosedural (pixel art). Jalankan dari folder Asta:
+    python3 tools/buat_asta.py
+Butuh paket: pip install pillow
+"""
+
+import json
+import math
+import os
+import random
+
+from PIL import Image, ImageDraw
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+SKIN = os.path.join(ROOT, "Asta_Skin")
+RP = os.path.join(ROOT, "Asta_RP")
+BP = os.path.join(ROOT, "Asta_BP")
+DOCS = os.path.join(ROOT, "docs")
+
+ENGINE = [1, 26, 30]
+UUID = {
+    "skin_header": "00b78e6d-c323-46e0-ae73-c6b5ce2ca7af",
+    "skin_module": "15783c09-cf35-4d41-ba1c-592f39c3f610",
+    "rp_header": "99fd278e-fca4-443d-85b3-c81b3eecf5c7",
+    "rp_module": "3e9a5ec4-0ea1-44be-afbe-c2031b2dbe4c",
+    "bp_header": "8e63df46-074f-4ba6-b764-50761c5d9263",
+    "bp_module": "91df387d-3a25-43b7-a043-23004968a1ad",
+    "bp_script": "a52a3d4b-40da-4afa-b576-5ac612ccdf5f",
+}
+SCRIPT_API = "2.4.0"  # @minecraft/server stabil (sama dengan addon Rakitin)
+
+random.seed(20261005)
+
+
+# ===========================================================================
+# Alat dasar
+# ===========================================================================
+def hex2rgb(h, a=255):
+    h = h.lstrip("#")
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
+
+
+def ubah(w, f):
+    r, g, b, a = w
+    return (max(0, min(255, int(r * f))), max(0, min(255, int(g * f))), max(0, min(255, int(b * f))), a)
+
+
+# Piksel transparan diberi RGB hitam supaya tetap gelap bila material tidak
+# memakai alpha test (mis. elytra).
+KOSONG = (12, 12, 14, 0)
+
+
+def kanvas(w, h):
+    return Image.new("RGBA", (w, h), KOSONG)
+
+
+def piksel(img):
+    f = getattr(img, "get_flattened_data", None)
+    return list(f() if f else img.getdata())
+
+
+def simpan(img, *bagian):
+    path = os.path.join(*bagian)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    img.save(path)
+    return path
+
+
+def tulis_json(data, *bagian):
+    path = os.path.join(*bagian)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
+def tulis_teks(isi, *bagian):
+    path = os.path.join(*bagian)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(isi)
+
+
+def grid(img, x0, y0, baris, palet, derau=0.04):
+    """Lukis pola karakter. '.' = biarkan (transparan)."""
+    for y, s in enumerate(baris):
+        for x, c in enumerate(s):
+            if c == "." or c == " ":
+                continue
+            w = palet[c]
+            if derau and w[3]:
+                w = ubah(w, 1 + random.uniform(-derau, derau))
+            img.putpixel((x0 + x, y0 + y), w)
+
+
+def kotak_uv(u, v, w, h, d):
+    """Posisi tiap sisi kubus pada tekstur (tata letak box-UV Minecraft)."""
+    return {
+        "atas": (u + d, v, w, d),
+        "bawah": (u + d + w, v, w, d),
+        "kanan": (u, v + d, d, h),
+        "depan": (u + d, v + d, w, h),
+        "kiri": (u + d + w, v + d, d, h),
+        "belakang": (u + d + w + d, v + d, w, h),
+    }
+
+
+def lukis_kubus(img, u, v, w, h, d, sisi, palet, derau=0.04):
+    """sisi: dict nama_sisi -> list string (ukuran harus pas)."""
+    pos = kotak_uv(u, v, w, h, d)
+    for nama, baris in sisi.items():
+        x0, y0, fw, fh = pos[nama]
+        assert len(baris) == fh and all(len(b) == fw for b in baris), (nama, u, v, len(baris), fw, fh)
+        grid(img, x0, y0, baris, palet, derau)
+
+
+def isi(w, h, c):
+    return [c * w for _ in range(h)]
+
+
+def acak_baris(w, h, pilihan, bobot=None):
+    return ["".join(random.choices(pilihan, weights=bobot, k=w)) for _ in range(h)]
+
+
+# ===========================================================================
+# Palet
+# ===========================================================================
+PALET = {
+    # rambut perak Asta
+    "H": hex2rgb("#e4e4ea"), "h": hex2rgb("#b9b9c4"), "g": hex2rgb("#8a8a98"),
+    # ikat kepala
+    "B": hex2rgb("#1d1d20"), "R": hex2rgb("#c3161c"), "r": hex2rgb("#7e0d11"),
+    # kulit & wajah
+    "S": hex2rgb("#f1c49c"), "s": hex2rgb("#d6a079"), "W": hex2rgb("#f6f6f6"),
+    "E": hex2rgb("#3fa64c"), "e": hex2rgb("#1d6b2a"), "M": hex2rgb("#5e2219"), "T": hex2rgb("#fbfbfb"),
+    # baju hitam, jubah, emas
+    "K": hex2rgb("#24242a"), "k": hex2rgb("#141418"), "G": hex2rgb("#d7ad3c"), "y": hex2rgb("#9c7a22"),
+    "C": hex2rgb("#b3262b"),
+    # celana & sepatu
+    "N": hex2rgb("#2c3449"), "n": hex2rgb("#1d2333"), "L": hex2rgb("#8c5a2c"), "l": hex2rgb("#64401f"),
+    # iblis
+    "D": hex2rgb("#161618"), "d": hex2rgb("#2c2c33"), "X": hex2rgb("#e3201f"), "x": hex2rgb("#8d0c0e"),
+    "o": hex2rgb("#4a4a54"), "O": hex2rgb("#6a6a76"), "Z": hex2rgb("#ff5a3c"),
+}
+
+
+# ===========================================================================
+# 1. Skin Asta (64x64, lengan 4 piksel)
+# ===========================================================================
+def skin_asta():
+    img = kanvas(64, 64)
+    P = PALET
+
+    # ---------------- kepala (0,0) ----------------
+    kepala = {
+        "atas": acak_baris(8, 8, "HHHhg", [5, 3, 1, 2, 1]),
+        "bawah": ["hSSSSSSh", "hSSSSSSh", "hsSSSSsh", "hSSSSSSh", "hSSSSSSh", "hhSSSShh", "hhhhhhhh", "hhhhhhhh"],
+        "depan": [
+            "hHHgHHhH",
+            "BBRRBBBB",
+            "HhSHHShH",
+            "SggSSggS",
+            "SWESSEWS",
+            "SSSssSSS",
+            "SsTTTTsS",
+            "SSSssSSS",
+        ],
+        "kanan": [
+            "HhHHgHHh",
+            "BBBBBBBB",
+            "HhHHhHHh",
+            "hHHhHHSS",
+            "HhHHhsSS",
+            "hHHHssSS",
+            "HhHhsSSS",
+            "hHgHSSSS",
+        ],
+        "kiri": [
+            "hHHgHHhH",
+            "BBBBBBBB",
+            "hHHhHHhH",
+            "SSHHhHHh",
+            "SSshHHhH",
+            "SSssHHHh",
+            "SSSshHhH",
+            "SSSSHgHh",
+        ],
+        "belakang": [
+            "HhHHgHHh",
+            "BBBBBBBB",
+            "HHhBBhHH",
+            "hHHBBHhH",
+            "HhHHhHHh",
+            "hHgHHhHg",
+            "HhHHhHHh",
+            "hHhHHgHh",
+        ],
+    }
+    lukis_kubus(img, 0, 0, 8, 8, 8, kepala, P)
+
+    # ---------------- lapisan topi (32,0): volume rambut + ikat kepala ----------------
+    topi = {
+        "atas": acak_baris(8, 8, "HHhg.", [4, 3, 2, 1, 2]),
+        "depan": [
+            "HhH.HHgH",
+            "BBRRBBBB",
+            "H.h..H.h",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+        ],
+        "kanan": [
+            "HhHHgHHh",
+            "BBBBBBBB",
+            "HhHHhH.h",
+            "hHHh.H..",
+            "H.Hh....",
+            "h.H.....",
+            "........",
+            "........",
+        ],
+        "kiri": [
+            "hHHgHHhH",
+            "BBBBBBBB",
+            "h.HhHHhH",
+            "..H.hHHh",
+            "....hH.H",
+            ".....H.h",
+            "........",
+            "........",
+        ],
+        "belakang": [
+            "HhHHgHHh",
+            "BBBBBBBB",
+            "HHhBBhHH",
+            "hH.BB.hH",
+            "H...B..h",
+            "h......H",
+            "........",
+            "........",
+        ],
+    }
+    lukis_kubus(img, 32, 0, 8, 8, 8, topi, P)
+
+    # ---------------- badan (16,16) ----------------
+    badan = {
+        "atas": ["KKKCCKKK", "KKCCCCKK", "KKCCCCKK", "KKKKKKKK"],
+        "bawah": isi(8, 4, "N"),
+        "depan": [
+            "KKCCCCKK",
+            "KKkSSKKK",
+            "KKKSsKKK",
+            "KKSSSKKK",
+            "KkSsSSKK",
+            "KKSSsSSK",
+            "KsSsSsSK",
+            "KSsSsSsK",
+            "KKSsSsKK",
+            "LLLGGLLL",
+            "lLLyyLLl",
+            "NNnNNnNN",
+        ],
+        "kanan": ["KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKKk", "KKKK", "LLLL", "lLLl", "NNnN"],
+        "kiri": ["KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "kKKK", "KKKK", "LLLL", "lLLl", "NnNN"],
+        "belakang": [
+            "KKKCCKKK",
+            "KKKKKKKK",
+            "KkKKKKkK",
+            "KKKKKKKK",
+            "KKkKKKKK",
+            "KKKKKkKK",
+            "KKKKKKKK",
+            "KkKKKKkK",
+            "KKKKKKKK",
+            "LLLLLLLL",
+            "lLLLLLLl",
+            "NNnNNnNN",
+        ],
+    }
+    lukis_kubus(img, 16, 16, 8, 12, 4, badan, P)
+
+    # lapisan jaket (16,32): jubah Banteng Hitam di bahu kiri Asta (kanan layar)
+    jaket = {
+        "atas": [".....KKK", ".....KKK", ".....KKK", ".....KKK"],
+        "depan": [
+            ".....GKK",
+            ".....GKK",
+            ".....GyK",
+            ".....GKK",
+            ".....GGG",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+        ],
+        "kiri": ["KKKK", "KKKK", "KKKK", "KKKK", "GGGG", "....", "....", "....", "....", "....", "....", "...."],
+        "belakang": [
+            "KKKK....",
+            "KGGK....",
+            "GyyG....",
+            "KGGK....",
+            "KKKK....",
+            "GGGG....",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+        ],
+    }
+    lukis_kubus(img, 16, 32, 8, 12, 4, jaket, P)
+
+    # ---------------- lengan kanan Asta (40,16): lengan hitam + lambang semanggi emas ----------------
+    lengan_kanan = {
+        "atas": ["KKKK", "KkKK", "KKKK", "KKkK"],
+        "bawah": ["SSSS", "SsSS", "SSSS", "SSsS"],
+        "depan": ["KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKKK", "kKKk", "KKKK", "SSSS", "SsSS"],
+        "kanan": ["KKKK", "KGKK", "GyGK", "KGKK", "KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "kKKk", "SSSS", "SSsS"],
+        "kiri": ["KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKKK", "KkKK", "KKKK", "KKKK", "kKKk", "SSSS", "sSSS"],
+        "belakang": ["KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKKK", "KKkK", "KKKK", "KKKK", "kKKk", "SSSS", "SSSs"],
+    }
+    lukis_kubus(img, 40, 16, 4, 12, 4, lengan_kanan, P)
+
+    # ---------------- lengan kiri Asta (32,48) ----------------
+    lengan_kiri = {
+        "atas": ["KKKK", "KKkK", "KKKK", "KkKK"],
+        "bawah": ["SSSS", "SSsS", "SSSS", "SsSS"],
+        "depan": ["KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "KKKK", "kKKk", "KKKK", "SSSS", "SSsS"],
+        "kanan": ["KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKKK", "KkKK", "KKKK", "KKKK", "kKKk", "SSSS", "sSSS"],
+        "kiri": ["KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "kKKk", "SSSS", "SSsS"],
+        "belakang": ["KKKK", "KkKK", "KKKK", "KKkK", "KKKK", "KKKK", "KKkK", "KKKK", "KKKK", "kKKk", "SSSS", "SSSs"],
+    }
+    lukis_kubus(img, 32, 48, 4, 12, 4, lengan_kiri, P)
+    # lapisan lengan kiri (48,48): jubah menutupi bahu
+    jubah_bahu = {
+        "atas": ["KKKK", "KKKK", "KKKK", "KKKK"],
+        "depan": ["KKKK", "KKKK", "KKKK", "GGGG"] + ["...."] * 8,
+        "kanan": ["KKKK", "KKKK", "KKKK", "GGGG"] + ["...."] * 8,
+        "kiri": ["KKKK", "KKKK", "KKKK", "GGGG"] + ["...."] * 8,
+        "belakang": ["KKKK", "KKKK", "KKKK", "GGGG"] + ["...."] * 8,
+    }
+    lukis_kubus(img, 48, 48, 4, 12, 4, jubah_bahu, P)
+
+    # ---------------- kaki ----------------
+    def kaki(cermin=False):
+        depan = ["NNNN", "NnNN", "NNNN", "NNnN", "NNNN", "nNNN", "GGGG", "LLLL", "LlLL", "LLLL", "LGGL", "lGGl"]
+        samping = ["NNNN", "NNnN", "NNNN", "NnNN", "NNNN", "NNNn", "GGGG", "LLLL", "LLlL", "LLLL", "LLLL", "llll"]
+        belakang = ["NNNN", "NnNN", "NNNN", "NNNN", "NNnN", "NNNN", "GGGG", "LLLL", "LLLL", "LlLL", "LLLL", "llll"]
+        if cermin:
+            depan = [b[::-1] for b in depan]
+        return {
+            "atas": ["NNNN"] * 4,
+            "bawah": ["llll", "lLLl", "lLLl", "llll"],
+            "depan": depan,
+            "kanan": samping,
+            "kiri": [b[::-1] for b in samping],
+            "belakang": belakang,
+        }
+
+    lukis_kubus(img, 0, 16, 4, 12, 4, kaki(), P)
+    lukis_kubus(img, 16, 48, 4, 12, 4, kaki(True), P)
+    # lapisan celana (manset sepatu menonjol)
+    manset = {n: ["...."] * 6 + ["GGGG", "LLLL"] + ["...."] * 4 for n in ("depan", "kanan", "kiri", "belakang")}
+    lukis_kubus(img, 0, 32, 4, 12, 4, manset, P)
+    lukis_kubus(img, 0, 48, 4, 12, 4, manset, P)
+    return img
+
+
+# ===========================================================================
+# 2. Armor iblis (layout 64x32 armor Bedrock) -> netherite_1 & netherite_2
+# ===========================================================================
+def armor_1():
+    """Helm, zirah dada, dan sepatu (Asta mode Devil Union, tanpa sayap)."""
+    img = kanvas(64, 32)
+    P = PALET
+    # ---- helm (kepala 0,0): rambut hitam, ikat merah, mata merah, tanda wajah, tanduk ----
+    helm = {
+        "atas": acak_baris(8, 8, "Ddo", [5, 3, 1]),
+        "bawah": isi(8, 8, "."),
+        "depan": [
+            "DdDDdDDd",
+            "XXDXXxDX",
+            "D.dD.dD.",
+            "........",
+            ".DX..XD.",
+            "......D.",
+            ".....D..",
+            "........",
+        ],
+        "kanan": [
+            "DdDDdDDd",
+            "XXDXXXDX",
+            "DdDoOo..",
+            "DdoO.Oo.",
+            "DdDo.Oo.",
+            "DdD..o..",
+            "Dd......",
+            "D.......",
+        ],
+        "kiri": [
+            "dDDdDDdD",
+            "XDXXXDXX",
+            "..oOoDdD",
+            ".oO.OodD",
+            ".oO.oDdD",
+            "..o..DdD",
+            "......dD",
+            ".......D",
+        ],
+        "belakang": [
+            "DdDDdDDd",
+            "XXXXXXXX",
+            "DDdXXdDD",
+            "dDDxxDDd",
+            "DdDDDDdD",
+            "dDdDDdDd",
+            "D.dDDd.D",
+            "...dD...",
+        ],
+    }
+    lukis_kubus(img, 0, 0, 8, 8, 8, helm, P)
+    # lapisan helm (32,0): jambul runcing di atas
+    topi = {
+        "atas": acak_baris(8, 8, "Dd.", [3, 2, 3]),
+        "depan": ["D.dD.Dd.", "........", "........", "........", "........", "........", "........", "........"],
+        "kanan": ["DdD.D.dD", "........", "D.......", "........", "........", "........", "........", "........"],
+        "kiri": ["Dd.D.DdD", "........", ".......D", "........", "........", "........", "........", "........"],
+        "belakang": ["dD.DD.Dd", "........", "D......D", "........", "........", "........", "........", "........"],
+    }
+    lukis_kubus(img, 32, 0, 8, 8, 8, topi, P)
+
+    # ---- zirah dada (badan 16,16): lambang merah dengan bintang salib hitam ----
+    dada = {
+        "atas": ["DXDDDDXD", "DDdDDdDD", "DDDdDDDD", "DdDDDDdD"],
+        "bawah": ["DDDDDDDD"] * 4,
+        "depan": [
+            "DDDDDDDD",
+            "DXXDDXXD",
+            "DXXXXXXD",
+            "DDXDDXDD",
+            "DDXDDXDD",
+            "DDDXXDDD",
+            "DdDXXDdD",
+            "DDDxxDDD",
+            "dDDDDDDd",
+            "DDdDDdDD",
+            "DxDDDDxD",
+            "DDDDDDDD",
+        ],
+        "kanan": ["XDDD", "DXDd", "DDXD", "dDDX", "DdDx", "DDdD", "xDDD", "DxDd", "DDxD", "dDDx", "DdDD", "XDDX"],
+        "kiri": ["DDDX", "dDXD", "DXDD", "XDDd", "xDdD", "DdDD", "DDDx", "dDxD", "DxDD", "xDDd", "DDdD", "XDDX"],
+        "belakang": [
+            "XDDXXDDX",
+            "DXDXXDXD",
+            "DDXXXXDD",
+            "DdDXXDdD",
+            "DDdXXdDD",
+            "DxDXXDxD",
+            "DDxXXxDD",
+            "dDDXXDDd",
+            "DdDxxDdD",
+            "dDxDDxDd",
+            "XDdDDdDX",
+            "DXDddDXD",
+        ],
+    }
+    lukis_kubus(img, 16, 16, 8, 12, 4, dada, P)
+
+    # ---- lengan (40,16): pelindung bahu merah, sarung tangan bercakar ----
+    lengan = {
+        "atas": ["XXXX", "XDDX", "XDDX", "XXXX"],
+        "bawah": ["DXDX", "XDXD", "DXDX", "XDXD"],
+        "depan": ["XXXX", "DXXD", "DDDD", "DdDD", "DDxD", "DdDD", "DxDD", "DDdD", "DDDD", "XXXX", "DDDD", "XDXD"],
+        "kanan": ["XXXX", "DXXD", "DDDD", "DDdD", "DxDD", "DDDd", "DDxD", "dDDD", "DDDD", "XXXX", "DDDD", "XDXD"],
+        "kiri": ["XXXX", "DXXD", "DDDD", "DdDD", "DDDD", "DDdD", "dDDD", "DDDd", "DDDD", "XXXX", "DDDD", "DXDX"],
+        "belakang": ["XXXX", "DXXD", "DDDD", "DDdD", "DxDD", "DDDD", "DDxD", "dDDD", "DDDD", "XXXX", "DDDD", "DXDX"],
+    }
+    lukis_kubus(img, 40, 16, 4, 12, 4, lengan, P)
+
+    # ---- sepatu (kaki 0,16; hanya bagian bawah) ----
+    k = "...."
+    sepatu = {
+        "atas": [k] * 4,
+        "bawah": ["DDDD", "DxxD", "DxxD", "DDDD"],
+        "depan": [k] * 6 + ["XDDX", "DXXD", "DDDD", "DxDD", "DDDD", "XDXD"],
+        "kanan": [k] * 6 + ["XDDX", "DXDD", "DDxD", "DDDD", "DdDD", "DDDD"],
+        "kiri": [k] * 6 + ["XDDX", "DDXD", "DxDD", "DDDD", "DDdD", "DDDD"],
+        "belakang": [k] * 6 + ["XDDX", "DXXD", "DDDD", "DDDD", "DDxD", "DDDD"],
+    }
+    lukis_kubus(img, 0, 16, 4, 12, 4, sepatu, P)
+    return img
+
+
+def armor_2():
+    """Celana zirah (kaki + pinggang)."""
+    img = kanvas(64, 32)
+    P = PALET
+    celana = {
+        "atas": ["DDDD"] * 4,
+        "bawah": [k for k in ["...."] * 4],
+        "depan": ["DDDD", "DxDD", "DdDD", "DDdD", "dDDD", "DXXD", "XDDX", "DDDD", "DdDD", "....", "....", "...."],
+        "kanan": ["DDDD", "DDDd", "DxDD", "DDDD", "dDDD", "DDxD", "DXDD", "XDDD", "DDDD", "....", "....", "...."],
+        "kiri": ["DDDD", "dDDD", "DDxD", "DDDD", "DDDd", "DxDD", "DDXD", "DDDX", "DDDD", "....", "....", "...."],
+        "belakang": ["DDDD", "DdDD", "DDDd", "DxDD", "DDxD", "dDDD", "DDdD", "DxxD", "DDDD", "....", "....", "...."],
+    }
+    lukis_kubus(img, 0, 16, 4, 12, 4, celana, P)
+    pinggang = {
+        "depan": ["........"] * 8 + ["DDDDDDDD", "XDDXXDDX", "DXDDDDXD", "DDDXXDDD"],
+        "kanan": ["...."] * 8 + ["DDDD", "XDDX", "DXXD", "DDDD"],
+        "kiri": ["...."] * 8 + ["DDDD", "XDDX", "DXXD", "DDDD"],
+        "belakang": ["........"] * 8 + ["DDDDDDDD", "XDDXXDDX", "DXDDDDXD", "DDDxxDDD"],
+    }
+    lukis_kubus(img, 16, 16, 8, 12, 4, pinggang, P)
+    return img
+
+
+# ===========================================================================
+# 3. Elytra: sayap iblis compang-camping (layout 64x32)
+# ===========================================================================
+def sayap_muka(cermin=False):
+    """Satu muka sayap 10x20: membran hitam, tepi merah, ujung bawah robek."""
+    w, h = 10, 20
+    m = [["D"] * w for _ in range(h)]
+    # tulang sayap merah dari pangkal (kiri atas) menyebar ke bawah
+    tulang = [((0, 0), (9, 1)), ((0, 0), (8, 9)), ((0, 0), (5, 16)), ((0, 0), (1, 19))]
+    for (ax, ay), (bx, by) in tulang:
+        n = max(abs(bx - ax), abs(by - ay))
+        for i in range(n + 1):
+            x = round(ax + (bx - ax) * i / n)
+            y = round(ay + (by - ay) * i / n)
+            m[y][x] = "x" if i > n * 0.6 else "X"
+    # tepi atas & luar merah
+    for x in range(w):
+        m[0][x] = "X"
+    for y in range(h):
+        m[y][w - 1] = "X" if y < 6 else m[y][w - 1]
+    # bagian bawah robek: kolom memanjang beda-beda (seperti api hitam)
+    panjang = [20, 17, 19, 14, 18, 12, 16, 10, 13, 7]
+    for x in range(w):
+        for y in range(panjang[x], h):
+            m[y][x] = "."
+        ujung = panjang[x] - 1
+        if 0 < ujung < h and m[ujung][x] != ".":
+            m[ujung][x] = "X"
+    # sedikit tekstur membran
+    for y in range(1, h):
+        for x in range(w - 1):
+            if m[y][x] == "D" and random.random() < 0.18:
+                m[y][x] = "d"
+    baris = ["".join(r) for r in m]
+    if cermin:
+        baris = [b[::-1] for b in baris]
+    return baris
+
+
+def elytra():
+    img = kanvas(64, 32)
+    depan = sayap_muka()
+    belakang = sayap_muka(cermin=True)
+    tepi = ["XD"] * 20
+    sisi = {
+        "atas": ["XXXXXXXXXX", "DDDDDDDDDD"],
+        "bawah": ["DDDDDDDDDD", "DDDDDDDDDD"],
+        "kanan": tepi,
+        "depan": depan,
+        "kiri": tepi,
+        "belakang": belakang,
+    }
+    # potong sisi samping supaya ikut robek
+    for nama in ("kanan", "kiri"):
+        sisi[nama] = [r if y < 14 else ".." for y, r in enumerate(sisi[nama])]
+    lukis_kubus(img, 22, 0, 10, 20, 2, sisi, PALET)
+    return img
+
+
+# ===========================================================================
+# 4. Empat pedang iblis (sprite 2 piksel per unit model)
+# ===========================================================================
+PX = 2  # piksel per unit model (1 blok = 16 unit, pemain = 32 unit)
+HITAM = hex2rgb("#151517")
+HITAM2 = hex2rgb("#26262c")
+SOROT = hex2rgb("#3d3d46")
+MERAH = hex2rgb("#d41b1b")
+MERAH2 = hex2rgb("#8e0b0d")
+MERAH3 = hex2rgb("#ff4b33")
+GARIS = hex2rgb("#050506")
+
+
+def outline(img, warna=GARIS):
+    salin = img.copy()
+    for y in range(img.height):
+        for x in range(img.width):
+            if salin.getpixel((x, y))[3]:
+                continue
+            for ox, oy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nx, ny = x + ox, y + oy
+                if 0 <= nx < img.width and 0 <= ny < img.height and salin.getpixel((nx, ny))[3]:
+                    img.putpixel((x, y), warna)
+                    break
+
+
+def poli(img, titik, warna):
+    ImageDraw.Draw(img).polygon(titik, fill=warna)
+
+
+def rect(img, x0, y0, x1, y1, warna):
+    ImageDraw.Draw(img).rectangle([x0, y0, x1, y1], fill=warna)
+
+
+def garis(img, a, b, warna, lebar=1):
+    ImageDraw.Draw(img).line([a, b], fill=warna, width=lebar)
+
+
+def gagang(img, cx, y0, y1, lebar, warna=HITAM, lilit=HITAM2, aksen=None):
+    """Pegangan berlilit; cx = kolom tengah (kiri dari pasangan piksel)."""
+    x0 = cx - lebar // 2 + 1
+    rect(img, x0, y0, x0 + lebar - 1, y1, warna)
+    for y in range(y0, y1 + 1):
+        if (y - y0) % 3 == 1:
+            rect(img, x0, y, x0 + lebar - 1, y, aksen or lilit)
+
+
+def sorot_kiri(img, warna=SOROT):
+    """Garis terang di sisi kiri tiap baris (kesan logam)."""
+    for y in range(img.height):
+        for x in range(img.width):
+            p = img.getpixel((x, y))
+            if p[3] and p[:3] == HITAM[:3]:
+                if x == 0 or img.getpixel((x - 1, y))[3] == 0:
+                    img.putpixel((x, y), warna)
+                break
+
+
+def pedang_pembasmi():
+    """Demon-Slayer Sword: pedang raksasa lebar, ujung runcing pendek, pola akar merah."""
+    W, L = 10, 32
+    img = kanvas(W * PX, L * PX)
+    poli(img, [(2, 6), (9, 0), (10, 0), (17, 6), (17, 45), (2, 45)], HITAM)
+    poli(img, [(5, 9), (9, 4), (10, 4), (14, 9), (14, 43), (5, 43)], MERAH)
+    # akar/urat hitam bercabang (seperti retakan api)
+    rnd = random.Random(7)
+
+    def cabang(x, y, arah, panjang, tebal):
+        for _ in range(panjang):
+            nx = x + arah + rnd.choice((-1, 0, 0, 1))
+            ny = y - 1
+            nx = max(5, min(14, nx))
+            if ny < 6:
+                return
+            img.putpixel((nx, ny), HITAM)
+            if tebal:
+                img.putpixel((min(14, nx + 1), ny), HITAM)
+            if rnd.random() < 0.12:
+                cabang(nx, ny, rnd.choice((-1, 1)), rnd.randint(3, 7), False)
+            x, y = nx, ny
+
+    cabang(9, 44, 0, 36, True)
+    for sx in (6, 12):
+        cabang(sx, 44, 0, 20, False)
+    for y in range(9, 44, 5):
+        img.putpixel((7, y), MERAH3)
+        img.putpixel((12, y + 2), MERAH3)
+    # pelindung tangan, pegangan, pangkal
+    poli(img, [(0, 46), (19, 46), (19, 48), (17, 49), (2, 49), (0, 48)], HITAM)
+    rect(img, 8, 47, 11, 48, MERAH2)
+    gagang(img, 9, 50, 59, 4)
+    poli(img, [(7, 60), (12, 60), (13, 62), (10, 63), (9, 63), (6, 62)], HITAM)
+    rect(img, 9, 61, 10, 61, MERAH)
+    sorot_kiri(img)
+    return img, W, L, 27.5  # pusat pegangan (unit dari atas)
+
+
+def pedang_penghuni():
+    """Demon-Dweller Sword: lebar, ujung datar membulat, lambang semanggi merah."""
+    W, L = 8, 28
+    img = kanvas(W * PX, L * PX)
+    poli(img, [(4, 0), (11, 0), (13, 2), (13, 35), (14, 38), (11, 40), (4, 40), (1, 38), (2, 35), (2, 2)], HITAM)
+    # lambang keriting/semanggi
+    for cx, cy in ((7.5, 5), (5.5, 8), (9.5, 8)):
+        ImageDraw.Draw(img).ellipse([cx - 1.6, cy - 1.6, cx + 1.6, cy + 1.6], fill=MERAH)
+    rect(img, 7, 8, 8, 12, MERAH)
+    rect(img, 6, 12, 9, 12, MERAH)
+    # alur tengah
+    rect(img, 7, 15, 8, 36, HITAM2)
+    for y in range(16, 36, 4):
+        img.putpixel((7, y), MERAH2)
+    # pelindung tangan melengkung ke bawah
+    poli(img, [(0, 41), (15, 41), (15, 44), (13, 43), (2, 43), (0, 44)], HITAM)
+    rect(img, 7, 41, 8, 42, MERAH)
+    gagang(img, 7, 44, 51, 4)
+    poli(img, [(5, 52), (10, 52), (11, 54), (9, 55), (6, 55), (4, 54)], HITAM)
+    rect(img, 7, 53, 8, 53, MERAH)
+    sorot_kiri(img)
+    return img, W, L, 24.0
+
+
+def pedang_penghancur():
+    """Demon-Destroyer Sword: ramping, garis merah di tengah, salib runcing dekat ujung."""
+    W, L = 6, 26
+    img = kanvas(W * PX, L * PX)
+    poli(img, [(5, 0), (6, 0), (8, 5), (8, 38), (3, 38), (3, 5)], HITAM)
+    rect(img, 5, 6, 6, 36, MERAH)
+    # salib dekat ujung
+    poli(img, [(0, 9), (11, 9), (9, 11), (2, 11)], HITAM)
+    rect(img, 3, 10, 8, 10, MERAH)
+    img.putpixel((5, 3), MERAH)
+    img.putpixel((6, 3), MERAH)
+    # duri merah di pangkal bilah
+    for y in range(29, 37, 3):
+        img.putpixel((2, y), MERAH)
+        img.putpixel((9, y), MERAH)
+        img.putpixel((1, y + 1), MERAH2)
+        img.putpixel((10, y + 1), MERAH2)
+    # pelindung tangan dengan ujung naik
+    poli(img, [(0, 37), (2, 39), (9, 39), (11, 37), (11, 41), (0, 41)], HITAM)
+    rect(img, 4, 39, 7, 40, MERAH2)
+    gagang(img, 5, 42, 48, 2)
+    ImageDraw.Draw(img).ellipse([3, 48, 8, 51], fill=HITAM)
+    img.putpixel((5, 49), MERAH)
+    img.putpixel((6, 50), MERAH)
+    sorot_kiri(img)
+    return img, W, L, 22.5
+
+
+def katana_penebas():
+    """Demon-Slasher Katana: bilah melengkung, mata pedang merah bergerigi."""
+    W, L = 5, 28
+    img = kanvas(W * PX, L * PX)
+    panjang_bilah = 41
+    for y in range(panjang_bilah):
+        t = 1 - y / panjang_bilah
+        lengkung = 3.2 * t * t  # melengkung ke kanan di ujung
+        x = 2 + round(lengkung)
+        if y < 3:  # ujung runcing
+            rect(img, x + 2 - y // 2, y, x + 3, y, HITAM)
+            if y == 2:
+                img.putpixel((x + 1, y), MERAH)
+            continue
+        rect(img, x + 2, y, x + 4, y, HITAM)  # punggung
+        gerigi = 1 if (y // 2) % 2 else 0
+        rect(img, x + gerigi, y, x + 1, y, MERAH if y % 4 else MERAH3)
+    # habaki & tsuba
+    rect(img, 3, 41, 6, 41, MERAH2)
+    ImageDraw.Draw(img).ellipse([0, 42, 9, 44], fill=HITAM)
+    img.putpixel((2, 43), MERAH)
+    img.putpixel((7, 43), MERAH)
+    # pegangan berlilit belah ketupat hitam-merah
+    rect(img, 3, 45, 6, 53, HITAM)
+    for y in range(45, 54):
+        img.putpixel((3 + (y % 4 if y % 4 < 4 else 0), y), MERAH2)
+    rect(img, 3, 54, 6, 55, HITAM2)
+    sorot_kiri(img)
+    return img, W, L, 24.5
+
+
+PEDANG = [
+    # id, pembuat sprite, ingot, nama EN, nama ID, damage, durability
+    ("demon_destroyer", pedang_penghancur, "iron_ingot", "Demon-Destroyer Sword", "Pedang Penghancur Iblis", 8, 1200),
+    ("demon_dweller", pedang_penghuni, "gold_ingot", "Demon-Dweller Sword", "Pedang Penghuni Iblis", 9, 1500),
+    ("demon_slayer", pedang_pembasmi, "diamond", "Demon-Slayer Sword", "Pedang Pembasmi Iblis", 10, 2031),
+    ("demon_slasher", katana_penebas, "netherite_ingot", "Demon-Slasher Katana", "Katana Penebas Iblis", 11, 2500),
+]
+
+
+def ikon_pedang(sprite, L, ukuran=32):
+    """Ikon inventori: sprite diputar 45 derajat, besarnya sesuai panjang asli."""
+    besar = sprite.resize((sprite.width * 8, sprite.height * 8), Image.NEAREST)
+    putar = besar.rotate(-45, resample=Image.NEAREST, expand=True)
+    putar = putar.crop(putar.getbbox())
+    sisi = max(10, round((ukuran - 2) * min(1.0, L / 32)))
+    skala = sisi / max(putar.size)
+    kecil = putar.resize((max(1, round(putar.width * skala)), max(1, round(putar.height * skala))), Image.LANCZOS)
+    hasil = kanvas(ukuran, ukuran)
+    # ujung pedang di kanan atas, pegangan di kiri bawah
+    ox, oy = ukuran - 1 - kecil.width, 1
+    hasil.alpha_composite(kecil, (ox, oy))
+    data = [(r, g, b, 255) if a >= 110 else KOSONG for (r, g, b, a) in piksel(hasil)]
+    hasil.putdata(data)
+    return hasil
+
+
+# ===========================================================================
+# 5. Ikon item vanilla yang diganti (armor netherite & elytra)
+# ===========================================================================
+def ikon_grid(baris):
+    img = kanvas(16, 16)
+    grid(img, 0, 0, baris, PALET, 0.03)
+    return img
+
+
+IKON_VANILLA = {
+    "netherite_helmet": [
+        "................",
+        "................",
+        "...D..D..D..D...",
+        "..DD.DDDDDD.DD..",
+        "..DDDDDDDDDDDD..",
+        ".oDXXXXXXXXXXDo.",
+        "oO.XXDXXXXDXX.Oo",
+        "o..DD......DD..o",
+        "o..DX......XD..o",
+        ".o.DD......DD.o.",
+        "...DD......DD...",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ],
+    "netherite_chestplate": [
+        "................",
+        "..XXX......XXX..",
+        ".XDDDXXXXXXDDDX.",
+        ".XDDDDXXXXDDDDX.",
+        ".XDDDXXDDXXDDDX.",
+        ".XDDXXDXXDXXDDX.",
+        ".DD.XXXDDXXX.DD.",
+        ".DD.DXXXXXXD.DD.",
+        "....DDXXXXDD....",
+        "....DdDXXDdD....",
+        "....DDdXXdDD....",
+        "....XDDDDDDX....",
+        "....DXDDDDXD....",
+        "....DDDDDDDD....",
+        "................",
+        "................",
+    ],
+    "netherite_leggings": [
+        "................",
+        "...DDDDDDDDDD...",
+        "...XDDXXXXDDX...",
+        "...DXDDDDDDXD...",
+        "...DDDD..DDDD...",
+        "...DXDD..DDXD...",
+        "...DDXD..DXDD...",
+        "...DXDD..DDXD...",
+        "...XDDX..XDDX...",
+        "...DXXD..DXXD...",
+        "...DDDD..DDDD...",
+        "...DdDD..DDdD...",
+        "...DDDD..DDDD...",
+        "................",
+        "................",
+        "................",
+    ],
+    "netherite_boots": [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "..XDDX....XDDX..",
+        "..DXXD....DXXD..",
+        "..DDDD....DDDD..",
+        "..DxDD....DDxD..",
+        "..DDDD....DDDD..",
+        ".DDDDD....DDDDD.",
+        "DDDDDD....DDDDDD",
+        "XDXDXD....DXDXDX",
+        "................",
+        "................",
+        "................",
+    ],
+    "elytra": [
+        "................",
+        ".XXXX......XXXX.",
+        "XDDDDX....XDDDDX",
+        "XDDDDDX..XDDDDDX",
+        "XDXDDDDXXDDDDXDX",
+        "XDDXDDDDDDDDXDDX",
+        "XDDDXDDDDDDXDDDX",
+        "XDdDDXDDDDXDDdDX",
+        "XDDDdDX..XDdDDDX",
+        ".DDDDDX..XDDDDD.",
+        ".DD.DDX..XDD.DD.",
+        ".D..DD....DD..D.",
+        "....D......D....",
+        "................",
+        "................",
+        "................",
+    ],
+}
+
+
+# ===========================================================================
+# 6. Pratinjau (tampak depan) untuk dokumentasi
+# ===========================================================================
+def wajah_depan(tex, u, v, w, h, d):
+    x0, y0, fw, fh = kotak_uv(u, v, w, h, d)["depan"]
+    return tex.crop((x0, y0, x0 + fw, y0 + fh))
+
+
+def render_depan(skin, armor1=None, armor2=None):
+    """Gambar 16x32 tampak depan (skin + lapisan + armor)."""
+    img = Image.new("RGBA", (16, 32), (0, 0, 0, 0))
+
+    def tempel(tex, u, v, w, h, d, x, y, cermin=False):
+        if tex is None:
+            return
+        f = wajah_depan(tex, u, v, w, h, d)
+        if cermin:
+            f = f.transpose(Image.FLIP_LEFT_RIGHT)
+        f = Image.merge("RGBA", f.split()[:3] + (f.split()[3].point(lambda a: 255 if a > 0 else 0),))
+        img.alpha_composite(f, (x, y))
+
+    # skin dasar + lapisan kedua
+    tempel(skin, 0, 0, 8, 8, 8, 4, 0)
+    tempel(skin, 32, 0, 8, 8, 8, 4, 0)
+    tempel(skin, 16, 16, 8, 12, 4, 4, 8)
+    tempel(skin, 16, 32, 8, 12, 4, 4, 8)
+    tempel(skin, 40, 16, 4, 12, 4, 0, 8)
+    tempel(skin, 32, 48, 4, 12, 4, 12, 8)
+    tempel(skin, 48, 48, 4, 12, 4, 12, 8)
+    tempel(skin, 0, 16, 4, 12, 4, 4, 20)
+    tempel(skin, 0, 32, 4, 12, 4, 4, 20)
+    tempel(skin, 16, 48, 4, 12, 4, 8, 20)
+    tempel(skin, 0, 48, 4, 12, 4, 8, 20)
+    if armor2 is not None:
+        tempel(armor2, 16, 16, 8, 12, 4, 4, 8)
+        tempel(armor2, 0, 16, 4, 12, 4, 4, 20)
+        tempel(armor2, 0, 16, 4, 12, 4, 8, 20, True)
+    if armor1 is not None:
+        tempel(armor1, 0, 0, 8, 8, 8, 4, 0)
+        tempel(armor1, 32, 0, 8, 8, 8, 4, 0)
+        tempel(armor1, 16, 16, 8, 12, 4, 4, 8)
+        tempel(armor1, 40, 16, 4, 12, 4, 0, 8)
+        tempel(armor1, 40, 16, 4, 12, 4, 12, 8, True)
+        tempel(armor1, 0, 16, 4, 12, 4, 4, 20)
+        tempel(armor1, 0, 16, 4, 12, 4, 8, 20, True)
+    return img
+
+
+def render_sayap(tex):
+    x0, y0, fw, fh = kotak_uv(22, 0, 10, 20, 2)["depan"]
+    kanan = tex.crop((x0, y0, x0 + fw, y0 + fh))
+    kiri = kanan.transpose(Image.FLIP_LEFT_RIGHT)
+    img = Image.new("RGBA", (fw * 2, fh), (0, 0, 0, 0))
+    img.alpha_composite(kanan, (0, 0))
+    img.alpha_composite(kiri, (fw, 0))
+    data = [p if p[3] else (0, 0, 0, 0) for p in piksel(img)]
+    img.putdata(data)
+    return img
+
+
+def pratinjau(skin, berarmor, sayap, sprites):
+    S = 8  # piksel layar per unit model
+    latar = hex2rgb("#e9e4dc")
+    img = Image.new("RGBA", (1000, 380), latar)
+    dr = ImageDraw.Draw(img)
+    lantai = 340
+    asta = render_depan(skin).resize((16 * S, 32 * S), Image.NEAREST)
+    img.alpha_composite(asta, (30, lantai - 32 * S))
+    # Asta mode iblis dengan sayap elytra di belakang
+    s = render_sayap(sayap).resize((20 * S, 20 * S), Image.NEAREST)
+    img.alpha_composite(s, (210 - 2 * S, lantai - 32 * S + 6 * S))
+    # berarmor: kanvas 28x42 unit, kaki (y=0) di baris 39
+    img.alpha_composite(berarmor, (210 - 6 * S, lantai - 39 * S))
+    # pedang berdiri, skala sama dengan pemain (sprite 2 px/unit -> S/2)
+    x = 420
+    for (id_, _f, ingot, en, _id, dmg, _dur), (spr, W, L, _hc) in zip(PEDANG, sprites):
+        p = spr.resize((spr.width * S // PX, spr.height * S // PX), Image.NEAREST)
+        p = Image.merge("RGBA", p.split()[:3] + (p.split()[3].point(lambda a: 255 if a else 0),))
+        img.alpha_composite(p, (x, lantai - p.height))
+        dr.text((x, lantai + 8), en.replace(" ", "\n", 1), fill=(30, 30, 30, 255))
+        x += max(p.width, 90) + 40
+    dr.line([(10, lantai), (990, lantai)], fill=(120, 110, 100, 255), width=2)
+    dr.text((30, 12), "Asta (skin)", fill=(30, 30, 30, 255))
+    dr.text((210, 12), "Armor Penyatuan Iblis (3D) + elytra", fill=(30, 30, 30, 255))
+    dr.text((420, 12), "Pedang (skala sama dengan tinggi pemain = 2 blok)", fill=(30, 30, 30, 255))
+    return img
+
+
+def pratinjau_elytra(skin, tex, kubus, S=8):
+    """Elytra iblis tampak depan & belakang (posisi diam, tanpa animasi)."""
+    badan = [k for k in kubus if not k[0].endswith("_wing")]
+    # sayap digeser sedikit ke luar seperti posisi diam di game
+    sayap = [(k[0], [k[1][0] + (-3 if k[0] == "left_wing" else 3), k[1][1] + 2, k[1][2]], *k[2:])
+             for k in kubus if k[0].endswith("_wing")]
+    depan = render_orto(render_depan(skin), tex, badan, "depan", S)
+    belakang = render_orto(render_belakang(skin), tex, badan + sayap, "belakang", S)
+    img = Image.new("RGBA", (depan.width * 2 + 3 * 20, depan.height + 60), hex2rgb("#e9e4dc"))
+    img.alpha_composite(depan, (20, 40))
+    img.alpha_composite(belakang, (depan.width + 40, 40))
+    dr = ImageDraw.Draw(img)
+    dr.text((20, 12), "Depan: rambatan iblis di badan, lengan & wajah (sayap disembunyikan)", fill=(30, 30, 30, 255))
+    dr.text((depan.width + 40, 12), "Belakang (sayap 3D, posisi diam)", fill=(30, 30, 30, 255))
+    return img
+
+
+def ikon_pack(skin, a1=None, latar="#1a1a1e"):
+    kep = render_depan(skin, a1).crop((4, 0, 12, 8)).resize((96, 96), Image.NEAREST)
+    img = Image.new("RGBA", (128, 128), hex2rgb(latar))
+    img.alpha_composite(kep, (16, 16))
+    ImageDraw.Draw(img).rectangle([0, 0, 127, 127], outline=hex2rgb("#c3161c"), width=6)
+    return img
+
+
+# ===========================================================================
+# JSON: manifest, item, resep, attachable, geometri, animasi, teks
+# ===========================================================================
+def manifest(nama, deskripsi, header, modul, tipe, dependensi=None):
+    m = {
+        "format_version": 2,
+        "header": {
+            "name": nama,
+            "description": deskripsi,
+            "uuid": header,
+            "version": [1, 0, 0],
+        },
+        "modules": [{"type": tipe, "uuid": modul, "version": [1, 0, 0]}],
+        "metadata": {"authors": ["Rakitin"]},
+    }
+    if tipe != "skin_pack":
+        m["header"]["min_engine_version"] = ENGINE
+    if dependensi:
+        m["dependencies"] = [{"uuid": dependensi, "version": [1, 0, 0]}]
+    return m
+
+
+def manifest_bp():
+    m = manifest("Asta §cBP", "Pedang iblis & armor Penyatuan Iblis Asta, lengkap dengan kekuatan sesuai lore.",
+                 UUID["bp_header"], UUID["bp_module"], "data", UUID["rp_header"])
+    m["modules"].append({"type": "script", "language": "javascript", "uuid": UUID["bp_script"],
+                         "version": [1, 0, 0], "entry": "scripts/main.js"})
+    m["dependencies"].insert(0, {"module_name": "@minecraft/server", "version": SCRIPT_API})
+    return m
+
+
+# Jeda (detik) kekuatan klik kanan tiap pedang; harus sama dengan scripts/pedang.js
+COOLDOWN = {"demon_slayer": 6, "demon_destroyer": 10, "demon_dweller": 2, "demon_slasher": 5}
+
+
+def item_json(id_, dmg, dur):
+    return {
+        "format_version": "1.26.30",
+        "minecraft:item": {
+            "description": {"identifier": f"asta:{id_}", "menu_category": {"category": "equipment", "group": "minecraft:itemGroup.name.sword"}},
+            "components": {
+                "minecraft:icon": f"asta_{id_}",
+                "minecraft:display_name": {"value": f"item.asta:{id_}.name"},
+                "minecraft:max_stack_size": 1,
+                "minecraft:hand_equipped": True,
+                "minecraft:damage": dmg,
+                "minecraft:durability": {"max_durability": dur},
+                "minecraft:enchantable": {"slot": "sword", "value": 15},
+                "minecraft:can_destroy_in_creative": False,
+                "minecraft:cooldown": {"category": f"asta_{id_}", "duration": COOLDOWN[id_]},
+                "asta:pedang": {"jenis": id_},
+                "minecraft:tags": {"tags": ["minecraft:is_sword", "minecraft:is_tool"]},
+                "minecraft:repairable": {
+                    "repair_items": [{"items": ["minecraft:netherite_ingot"], "repair_amount": "context.other->q.remaining_durability + 0.25 * context.other->q.max_durability"}]
+                },
+            },
+        },
+    }
+
+
+def resep_json(id_, ingot):
+    return {
+        "format_version": "1.20.10",
+        "minecraft:recipe_shapeless": {
+            "description": {"identifier": f"asta:{id_}"},
+            "tags": ["crafting_table"],
+            "ingredients": [
+                {"tag": "minecraft:is_sword"},
+                {"item": f"minecraft:{ingot}"},
+            ],
+            "unlock": {"context": "AlwaysUnlocked"},
+            "result": {"item": f"asta:{id_}", "count": 1},
+        },
+    }
+
+
+# Animasi pegang memakai nilai trident vanilla. Dengan animasi itu, titik yang
+# jatuh tepat di tangan adalah y ~= 13.3 pada geometri trident (dihitung dari
+# rotasi [-97, -1.5, -49] urutan ZYX + translasi [1.5, -2.5, -10.5] terhadap
+# pivot [0, 24, 0]). Pusat pegangan pedang diletakkan di titik itu.
+GRIP_Y = 13.3
+
+
+def geometri_json(id_, W, L, hc):
+    y0 = GRIP_Y - (L - hc)
+    tw, th = W * PX, L * PX
+    return {
+        "format_version": "1.16.0",
+        "minecraft:geometry": [
+            {
+                "description": {
+                    "identifier": f"geometry.asta.{id_}",
+                    "texture_width": tw,
+                    "texture_height": th,
+                    "visible_bounds_width": 4,
+                    "visible_bounds_height": 4,
+                    "visible_bounds_offset": [0, 1, 0],
+                },
+                "bones": [
+                    {
+                        "name": "pedang",
+                        "binding": "q.item_slot_to_bone_name(c.item_slot)",
+                        "pivot": [0.0, 24.0, 0.0],
+                        "cubes": [
+                            {
+                                "origin": [-W / 2, y0, -0.125],
+                                "size": [W, L, 0.25],
+                                "uv": {
+                                    "north": {"uv": [0, 0], "uv_size": [tw, th]},
+                                    "south": {"uv": [tw, 0], "uv_size": [-tw, th]},
+                                },
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def attachable_json(id_):
+    return {
+        "format_version": "1.10.0",
+        "minecraft:attachable": {
+            "description": {
+                "identifier": f"asta:{id_}",
+                "materials": {"default": "entity_alphatest", "enchanted": "entity_alphatest_glint"},
+                "textures": {
+                    "default": f"textures/asta/pedang/{id_}",
+                    "enchanted": "textures/misc/enchanted_item_glint",
+                },
+                "geometry": {"default": f"geometry.asta.{id_}"},
+                "animations": {
+                    "orang_pertama": "animation.asta.pedang.orang_pertama",
+                    "orang_ketiga": "animation.asta.pedang.orang_ketiga",
+                },
+                "scripts": {
+                    "animate": [
+                        {"orang_pertama": "c.is_first_person"},
+                        {"orang_ketiga": "!c.is_first_person"},
+                    ]
+                },
+                "render_controllers": ["controller.render.item_default"],
+            }
+        },
+    }
+
+
+def animasi_json():
+    # Nilai diambil dari animasi pegang trident vanilla (animation.trident.*).
+    return {
+        "format_version": "1.10.0",
+        "animations": {
+            "animation.asta.pedang.orang_pertama": {
+                "loop": True,
+                "bones": {"pedang": {"position": [-7.0, -3.0, -2.0], "rotation": [152.0, -9.0, 25.0]}},
+            },
+            "animation.asta.pedang.orang_ketiga": {
+                "loop": True,
+                "bones": {"pedang": {"position": [1.5, -2.5, -10.5], "rotation": [97.0, -1.5, -49.0]}},
+            },
+        },
+    }
+
+
+def skin_pack_json():
+    return {
+        "skins": [
+            {"localization_name": "asta", "geometry": "geometry.humanoid.custom", "texture": "asta.png", "type": "free"},
+            {"localization_name": "asta_iblis", "geometry": "geometry.humanoid.custom", "texture": "asta_iblis.png", "type": "free"},
+        ],
+        "serialize_name": "AstaBlackClover",
+        "localization_name": "AstaBlackClover",
+    }
+
+
+def skin_iblis(skin, a1, a2):
+    """Skin tambahan: Asta mode iblis (armor dilukis langsung ke skin)."""
+    img = skin.copy()
+
+    def salin(src, su, sv, du, dv, w, h, d, cermin=False):
+        ps, pd = kotak_uv(su, sv, w, h, d), kotak_uv(du, dv, w, h, d)
+        for nama in ps:
+            x0, y0, fw, fh = ps[nama]
+            f = src.crop((x0, y0, x0 + fw, y0 + fh))
+            if cermin:
+                f = f.transpose(Image.FLIP_LEFT_RIGHT)
+            dx, dy, _, _ = pd[nama]
+            for y in range(fh):
+                for x in range(fw):
+                    p = f.getpixel((x, y))
+                    if p[3]:
+                        img.putpixel((dx + x, dy + y), p)
+
+    # bersihkan lapisan topi/jaket/manset asal
+    for (u, v, w, h, d) in ((32, 0, 8, 8, 8), (16, 32, 8, 12, 4), (48, 48, 4, 12, 4), (0, 32, 4, 12, 4), (0, 48, 4, 12, 4)):
+        for nama, (x0, y0, fw, fh) in kotak_uv(u, v, w, h, d).items():
+            for y in range(fh):
+                for x in range(fw):
+                    img.putpixel((x0 + x, y0 + y), KOSONG)
+    salin(a1, 0, 0, 0, 0, 8, 8, 8)
+    salin(a1, 32, 0, 32, 0, 8, 8, 8)
+    salin(a2, 16, 16, 16, 16, 8, 12, 4)
+    salin(a1, 16, 16, 16, 16, 8, 12, 4)
+    salin(a1, 40, 16, 40, 16, 4, 12, 4)
+    salin(a1, 40, 16, 32, 48, 4, 12, 4, True)
+    for (u, v) in ((0, 16), (16, 48)):
+        salin(a2, 0, 16, u, v, 4, 12, 4, u == 16)
+        salin(a1, 0, 16, u, v, 4, 12, 4, u == 16)
+    # rambut hitam iblis
+    for y in range(64):
+        for x in range(64):
+            p = img.getpixel((x, y))
+            if p[3] and p[:3] in {PALET[c][:3] for c in "Hhg"}:
+                img.putpixel((x, y), ubah(PALET["D"], 1 + random.uniform(-0.15, 0.4)))
+    return img
+
+
+# ===========================================================================
+# 7. Armor iblis dengan BENTUK sendiri (geometri 3D + item baru)
+# ===========================================================================
+ARMOR_TEX = (128, 64)
+ARMOR_TEXTURE = "textures/asta/armor/iblis"
+
+
+def salin_muka(src, s_uvd, dst, d_uvd, baris_bawah=None):
+    """Salin tiap sisi kubus box-UV dari src ke dst.
+
+    s_uvd/d_uvd = (u, v, w, h, d). baris_bawah: ambil n baris terbawah sisi
+    samping (untuk kubus tujuan yang lebih pendek)."""
+    ps, pd = kotak_uv(*s_uvd), kotak_uv(*d_uvd)
+    for nama in ps:
+        sx, sy, sw, sh = ps[nama]
+        dx, dy, dw, dh = pd[nama]
+        if dh < sh:  # sisi samping lebih pendek: ambil bagian bawah
+            sy, sh = sy + sh - dh, dh
+        f = src.crop((sx, sy, sx + dw, sy + dh))
+        dst.paste(f, (dx, dy))
+
+
+def lukis_gaya(img, u, v, w, h, d, gaya):
+    """Lukis kubus tambahan (tanduk, duri, cakar, ekor) dengan gaya sederhana."""
+    for nama, (x0, y0, fw, fh) in kotak_uv(u, v, w, h, d).items():
+        for y in range(fh):
+            for x in range(fw):
+                tepi = x in (0, fw - 1) or y in (0, fh - 1)
+                if gaya == "merah":
+                    c = "x" if (nama == "bawah" or random.random() < 0.25) else "X"
+                elif gaya == "tanduk":
+                    # gelap di pangkal, terang di ujung
+                    c = random.choice("oOd") if y < fh / 2 else random.choice("oO")
+                elif gaya == "hitam_tepi":
+                    # tepi merah hanya di sisi atas tiap muka (kesan pinggiran menyala)
+                    c = "X" if (y == 0 and nama != "atas") else random.choice("DDd")
+                elif gaya == "lambang":
+                    c = "X"
+                    if nama == "depan":
+                        pola = ["xXDXx", "XXDXX", "DDDDD", "XXDXX", "xXDXx"]
+                        c = pola[y % 5][x % 5]
+                else:  # hitam
+                    c = random.choice("DDDd")
+                img.putpixel((x0 + x, y0 + y), ubah(PALET[c], 1 + random.uniform(-0.05, 0.05)))
+
+
+class Penata:
+    """Penempatan UV sederhana (rak) untuk kubus tambahan."""
+
+    def __init__(self, x=0, y=26, ukuran=ARMOR_TEX):
+        self.x, self.y, self.t = x, y, 0
+        self.ukuran = ukuran
+
+    def tempat(self, w, h, d):
+        fw, fh = 2 * (w + d), d + h
+        if self.x + fw > self.ukuran[0]:
+            self.x, self.y, self.t = 0, self.y + self.t, 0
+        u, v = self.x, self.y
+        assert v + fh <= self.ukuran[1], "tekstur penuh"
+        self.x += fw
+        self.t = max(self.t, fh)
+        return u, v
+
+
+def cermin_x(origin, size):
+    return [-(origin[0] + size[0]), origin[1], origin[2]]
+
+
+# Kubus utama: posisi UV tetap; dilukis dari pola armor_1/armor_2.
+UV_HELM, UV_IKAT, UV_DADA, UV_LENGAN = (0, 0), (0, 16), (32, 0), (56, 0)
+UV_KAKI, UV_SEPATU, UV_PINGGANG = (72, 0), (88, 0), (104, 0)
+
+# (bagian, bone, origin, size, gaya, inflate, rotasi, pivot)
+# Kubus sisi kanan (x negatif) otomatis dicerminkan ke kiri bila bone = rightArm/rightLeg
+# atau ditandai "cermin".
+TAMBAHAN = {
+    "helm": [
+        # tanduk melingkar dari pelipis, melengkung ke bawah lalu ke depan
+        ("head", [-7.0, 28.0, -1.0], [2, 2, 2], "tanduk", 0, None, None, "cermin"),
+        ("head", [-8.5, 25.5, -1.0], [2, 3, 2], "tanduk", 0, None, None, "cermin"),
+        ("head", [-8.0, 24.5, -3.0], [1, 1, 2], "tanduk", 0, None, None, "cermin"),
+        # rambut runcing hitam
+        ("head", [-3.0, 32.5, -3.0], [2, 3, 2], "hitam", 0, [-15, 0, 15], [-2, 32.5, -2], None),
+        ("head", [1.0, 32.5, -3.0], [2, 3, 2], "hitam", 0, [-15, 0, -15], [2, 32.5, -2], None),
+        ("head", [-1.0, 32.5, -1.0], [2, 4, 2], "hitam", 0, None, None, None),
+        ("head", [-3.5, 32.0, 1.0], [2, 3, 2], "hitam", 0, [20, 0, 20], [-2.5, 32, 2], None),
+        ("head", [1.5, 32.0, 1.0], [2, 3, 2], "hitam", 0, [20, 0, -20], [2.5, 32, 2], None),
+        ("head", [-1.0, 31.5, 3.0], [2, 3, 2], "hitam", 0, [35, 0, 0], [0, 31.5, 4], None),
+    ],
+    "zirah": [
+        ("body", [-2.5, 16.5, -3.75], [5, 5, 1], "lambang", 0, None, None, None),
+        ("body", [-0.5, 20.0, 2.5], [1, 2, 2], "merah", 0, [-30, 0, 0], [0, 20, 3], None),
+        ("body", [-0.5, 16.0, 2.5], [1, 2, 2], "merah", 0, [-30, 0, 0], [0, 16, 3], None),
+        # pelindung bahu + duri
+        ("rightArm", [-9.5, 22.0, -3.5], [5, 3, 7], "hitam_tepi", 0.25, None, None, None),
+        ("rightArm", [-9.0, 25.0, -1.0], [2, 3, 2], "merah", 0, [0, 0, 25], [-8, 25, 0], None),
+        # cakar
+        ("rightArm", [-7.5, 9.0, -2.5], [1, 2, 1], "merah", 0, None, None, None),
+        ("rightArm", [-7.5, 9.0, -0.5], [1, 2, 1], "merah", 0, None, None, None),
+        ("rightArm", [-7.5, 9.0, 1.5], [1, 2, 1], "merah", 0, None, None, None),
+    ],
+    "celana": [
+        # ekor iblis berujung sekop
+        ("body", [-0.5, 11.0, 2.5], [1, 1, 4], "hitam", 0, None, None, None),
+        ("body", [-0.5, 5.0, 6.0], [1, 6, 1], "hitam", 0, None, None, None),
+        ("body", [-0.5, 4.0, 6.0], [1, 1, 4], "hitam", 0, None, None, None),
+        ("body", [-1.5, 3.0, 10.0], [3, 3, 1], "hitam_tepi", 0, None, None, None),
+        # duri lutut
+        ("rightLeg", [-3.0, 6.0, -3.5], [2, 2, 1], "merah", 0, None, None, None),
+    ],
+    "sepatu": [
+        ("rightLeg", [-3.5, 0.0, -3.75], [1, 1, 1], "merah", 0, None, None, None),
+        ("rightLeg", [-2.25, 0.0, -3.75], [1, 1, 1], "merah", 0, None, None, None),
+        ("rightLeg", [-1.0, 0.0, -3.75], [1, 1, 1], "merah", 0, None, None, None),
+        ("rightLeg", [-2.5, 3.0, 2.4], [1, 2, 1], "merah", 0, [30, 0, 0], [-2, 3, 2.9], None),
+    ],
+}
+
+# (id, nama EN, nama ID, slot, proteksi, durabilitas, vanilla untuk resep, enchant slot, variabel lapisan)
+ARMOR = [
+    ("iblis_helm", "Devil Union Helmet", "Helm Penyatuan Iblis", "slot.armor.head", 4, 520,
+     "netherite_helmet", "armor_head", "helmet"),
+    ("iblis_zirah", "Devil Union Chestplate", "Zirah Penyatuan Iblis", "slot.armor.chest", 9, 760,
+     "netherite_chestplate", "armor_torso", "chest"),
+    ("iblis_celana", "Devil Union Leggings", "Celana Penyatuan Iblis", "slot.armor.legs", 7, 710,
+     "netherite_leggings", "armor_legs", "leg"),
+    ("iblis_sepatu", "Devil Union Boots", "Sepatu Penyatuan Iblis", "slot.armor.feet", 4, 610,
+     "netherite_boots", "armor_feet", "boot"),
+]
+BAGIAN_ARMOR = {"iblis_helm": "helm", "iblis_zirah": "zirah", "iblis_celana": "celana", "iblis_sepatu": "sepatu"}
+
+
+def tekstur_dan_geometri_armor(a1, a2):
+    """Kembalikan (tekstur 128x64, {id: geometri JSON}, {id: daftar kubus utk pratinjau})."""
+    img = kanvas(*ARMOR_TEX)
+    # --- kubus utama dari pola armor lama ---
+    salin_muka(a1, (0, 0, 8, 8, 8), img, (*UV_HELM, 8, 8, 8))
+    salin_muka(a1, (16, 16, 8, 12, 4), img, (*UV_DADA, 8, 12, 4))
+    salin_muka(a1, (40, 16, 4, 12, 4), img, (*UV_LENGAN, 4, 12, 4))
+    salin_muka(a2, (0, 16, 4, 12, 4), img, (*UV_KAKI, 4, 12, 4))
+    salin_muka(a1, (0, 16, 4, 12, 4), img, (*UV_SEPATU, 4, 6, 4))
+    salin_muka(a2, (16, 16, 8, 12, 4), img, (*UV_PINGGANG, 8, 3, 4))
+    # celana: tutup baris bawah yang dulu transparan
+    for nama, (x0, y0, fw, fh) in kotak_uv(*UV_KAKI, 4, 12, 4).items():
+        for y in range(fh):
+            for x in range(fw):
+                if img.getpixel((x0 + x, y0 + y))[3] == 0 and nama not in ("bawah",):
+                    img.putpixel((x0 + x, y0 + y), ubah(PALET["D"], 1 + random.uniform(-0.06, 0.06)))
+    # sepatu & pinggang: atas/bawah pejal
+    for uvd in ((*UV_SEPATU, 4, 6, 4), (*UV_PINGGANG, 8, 3, 4)):
+        for nama in ("atas", "bawah"):
+            x0, y0, fw, fh = kotak_uv(*uvd)[nama]
+            for y in range(fh):
+                for x in range(fw):
+                    img.putpixel((x0 + x, y0 + y), ubah(PALET["D" if nama == "atas" else "x"], 1))
+    # ikat kepala merah bertanda hitam
+    ikat = {
+        "atas": isi(8, 8, "."), "bawah": isi(8, 8, "."),
+        "depan": ["XXDXXxDX"], "belakang": ["XXXxXXXX"],
+        "kanan": ["XXDXXXDX"], "kiri": ["XDXXXDXX"],
+    }
+    lukis_kubus(img, *UV_IKAT, 8, 1, 8, ikat, PALET)
+
+    utama = {
+        "helm": [
+            ("head", [-4, 24, -4], [8, 8, 8], UV_HELM, 1.0),
+        ],
+        "zirah": [
+            ("body", [-4, 12, -2], [8, 12, 4], UV_DADA, 1.0),
+            ("rightArm", [-8, 12, -2], [4, 12, 4], UV_LENGAN, 1.0),
+        ],
+        "celana": [
+            ("body", [-4, 10, -2], [8, 3, 4], UV_PINGGANG, 0.6),
+            ("rightLeg", [-3.9, 0, -2], [4, 12, 4], UV_KAKI, 0.5),
+        ],
+        "sepatu": [
+            ("rightLeg", [-3.9, 0, -2], [4, 6, 4], UV_SEPATU, 0.9),
+        ],
+    }
+    pivot_bone = {
+        "waist": [0, 12, 0], "body": [0, 24, 0], "head": [0, 24, 0],
+        "rightArm": [-5, 22, 0], "leftArm": [5, 22, 0],
+        "rightLeg": [-1.9, 12, 0], "leftLeg": [1.9, 12, 0],
+    }
+    induk = {"body": "waist", "head": "body", "rightArm": "body", "leftArm": "body",
+             "rightLeg": "body", "leftLeg": "body"}
+    kiri = {"rightArm": "leftArm", "rightLeg": "leftLeg"}
+
+    penata = Penata()
+    geo, kubus_pratinjau = {}, {}
+    for id_, *_r in ARMOR:
+        bagian = BAGIAN_ARMOR[id_]
+        tulang = {}  # bone -> daftar kubus JSON
+        pr = []
+
+        def tambah(bone, origin, size, uv, inflate, mirror=False, rot=None, pivot=None):
+            c = {"origin": origin, "size": size, "uv": list(uv)}
+            if inflate:
+                c["inflate"] = inflate
+            if mirror:
+                c["mirror"] = True
+            if rot:
+                c["rotation"] = rot
+                c["pivot"] = pivot
+            tulang.setdefault(bone, []).append(c)
+            pr.append((origin, size, uv, inflate, mirror))
+
+        for bone, origin, size, uv, inf in utama[bagian]:
+            tambah(bone, origin, size, uv, inf)
+            if bone in kiri:
+                tambah(kiri[bone], cermin_x(origin, size), size, uv, inf, True)
+        for bone, origin, size, gaya, inf, rot, piv, tanda in TAMBAHAN[bagian]:
+            u, v = penata.tempat(*size_int(size))
+            lukis_gaya(img, u, v, *size_int(size), gaya)
+            tambah(bone, origin, size, (u, v), inf, False, rot, piv)
+            if bone in kiri or tanda == "cermin":
+                rot2 = [rot[0], -rot[1], -rot[2]] if rot else None
+                piv2 = [-piv[0], piv[1], piv[2]] if piv else None
+                tambah(kiri.get(bone, bone), cermin_x(origin, size), size, (u, v), inf, True, rot2, piv2)
+
+        bones = []
+        dipakai = set(tulang) | {"body"}
+        for nama in ("waist", "body", "head", "rightArm", "leftArm", "rightLeg", "leftLeg"):
+            if nama not in dipakai and nama != "waist":
+                continue
+            b = {"name": nama, "pivot": pivot_bone[nama]}
+            if nama in induk:
+                b["parent"] = induk[nama]
+            if nama in tulang:
+                b["cubes"] = tulang[nama]
+            bones.append(b)
+        geo[id_] = {
+            "format_version": "1.16.0",
+            "minecraft:geometry": [{
+                "description": {
+                    "identifier": f"geometry.asta.{id_}",
+                    "texture_width": ARMOR_TEX[0], "texture_height": ARMOR_TEX[1],
+                    "visible_bounds_width": 3, "visible_bounds_height": 3.5,
+                    "visible_bounds_offset": [0, 1.25, 0],
+                },
+                "bones": bones,
+            }],
+        }
+        kubus_pratinjau[id_] = pr
+    return img, geo, kubus_pratinjau
+
+
+def size_int(size):
+    return [max(1, math.ceil(s)) for s in size]
+
+
+def attachable_armor_json(id_, lapisan):
+    return {
+        "format_version": "1.10.0",
+        "minecraft:attachable": {
+            "description": {
+                "identifier": f"asta:{id_}",
+                "materials": {"default": "armor", "enchanted": "armor_enchanted"},
+                "textures": {"default": ARMOR_TEXTURE, "enchanted": "textures/misc/enchanted_actor_glint"},
+                "geometry": {"default": f"geometry.asta.{id_}"},
+                "scripts": {"parent_setup": f"variable.{lapisan}_layer_visible = 0.0;"},
+                "render_controllers": ["controller.render.armor"],
+            }
+        },
+    }
+
+
+def item_armor_json(id_, slot, prot, dur, enchant):
+    return {
+        "format_version": "1.26.30",
+        "minecraft:item": {
+            "description": {"identifier": f"asta:{id_}", "menu_category": {"category": "equipment"}},
+            "components": {
+                "minecraft:icon": f"asta_{id_}",
+                "minecraft:display_name": {"value": f"item.asta:{id_}.name"},
+                "minecraft:max_stack_size": 1,
+                "minecraft:wearable": {"slot": slot, "protection": prot},
+                "minecraft:durability": {"max_durability": dur},
+                "minecraft:enchantable": {"slot": enchant, "value": 15},
+                "minecraft:tags": {"tags": ["minecraft:is_armor", "asta:iblis"]},
+                "minecraft:repairable": {
+                    "repair_items": [{"items": ["minecraft:netherite_ingot"], "repair_amount": "context.other->q.remaining_durability + 0.25 * context.other->q.max_durability"}]
+                },
+            },
+        },
+    }
+
+
+def resep_armor_json(id_, vanilla):
+    return {
+        "format_version": "1.20.10",
+        "minecraft:recipe_shapeless": {
+            "description": {"identifier": f"asta:{id_}"},
+            "tags": ["crafting_table"],
+            "ingredients": [
+                {"item": f"minecraft:{vanilla}"},
+                {"item": "minecraft:crying_obsidian"},
+                {"item": "minecraft:redstone_block"},
+            ],
+            "unlock": {"context": "AlwaysUnlocked"},
+            "result": {"item": f"asta:{id_}", "count": 1},
+        },
+    }
+
+
+def render_armor_depan(skin, tex, daftar_kubus, S=8):
+    """Pratinjau tampak depan: skin datar + kubus armor (proyeksi ortografis sisi depan)."""
+    lebar, tinggi = 28, 42  # unit model: x -14..14, y -3..39
+    img = Image.new("RGBA", (lebar * S, tinggi * S), (0, 0, 0, 0))
+    dasar = render_depan(skin).resize((16 * S, 32 * S), Image.NEAREST)
+    img.alpha_composite(dasar, ((14 - 8) * S, (39 - 32) * S))
+    semua = [k for d in daftar_kubus for k in d]
+    # belakang dulu (z depan paling kecil digambar terakhir)
+    semua.sort(key=lambda k: -(k[0][2] - k[3]))
+    for origin, size, uv, inf, mirror in semua:
+        w, h, d = size_int(size)
+        x0, y0, fw, fh = kotak_uv(uv[0], uv[1], w, h, d)["depan"]
+        muka = tex.crop((x0, y0, x0 + fw, y0 + fh))
+        if mirror:
+            muka = muka.transpose(Image.FLIP_LEFT_RIGHT)
+        lx = origin[0] - inf
+        ty = origin[1] + size[1] + inf
+        pw, ph = (size[0] + 2 * inf) * S, (size[1] + 2 * inf) * S
+        muka = muka.resize((max(1, round(pw)), max(1, round(ph))), Image.NEAREST)
+        a = muka.split()[3].point(lambda v: 255 if v else 0)
+        muka.putalpha(a)
+        img.alpha_composite(muka, (round((lx + 14) * S), round((39 - ty) * S)))
+    return img
+
+
+# ===========================================================================
+# 8. Elytra 3D: sayap iblis + rambatan iblis di badan (mengganti model elytra)
+# ===========================================================================
+ELYTRA_TEX = (128, 128)
+ELYTRA_TEXTURE = "textures/asta/elytra/iblis"
+
+
+def warna(c, f=0.06):
+    return ubah(PALET[c], 1 + random.uniform(-f, f))
+
+
+def muka_selaput(w, h, rnd):
+    """Selaput sayap: hitam, urat merah, tepi bawah robek & berlubang."""
+    m = [["D"] * w for _ in range(h)]
+    for x in range(w):
+        robek = rnd.randint(0, min(6, h // 3))
+        for y in range(h - robek, h):
+            m[y][x] = "."
+        if h - robek - 1 >= 0 and rnd.random() < 0.6:
+            m[h - robek - 1][x] = "x"
+    for _ in range(max(1, h // 8)):  # lubang kecil
+        hx, hy = rnd.randrange(w), rnd.randrange(h // 2, h)
+        m[hy][hx] = "."
+    # urat merah diagonal dari atas
+    x = rnd.randrange(w)
+    for y in range(h):
+        if m[y][x] != ".":
+            m[y][x] = "x" if rnd.random() < 0.7 else "X"
+        if rnd.random() < 0.35:
+            x = max(0, min(w - 1, x + rnd.choice((-1, 1))))
+    for y in range(h):
+        for x in range(w):
+            if m[y][x] == "D" and rnd.random() < 0.2:
+                m[y][x] = "d"
+    return m
+
+
+def muka_api(w, h, rnd):
+    """Lidah api hitam (seperti ujung sayap di gambar) dengan inti merah."""
+    m = [["."] * w for _ in range(h)]
+    for y in range(h):
+        lebar = max(1, round(w * (y + 1) / h))
+        x0 = (w - lebar) // 2 + (rnd.choice((0, 1)) if lebar < w else 0)
+        for x in range(x0, min(w, x0 + lebar)):
+            m[y][x] = "D"
+    for y in range(h // 2, h):
+        m[y][w // 2] = "X" if rnd.random() < 0.6 else "x"
+    return m
+
+
+def muka_rambatan(w, h, rnd, solid, sulur, merah=0.07):
+    """Rambatan iblis: area hitam pejal dari atas + sulur yang menjalar ke bawah.
+
+    solid = (min, maks) kedalaman area pejal dari tepi atas.
+    sulur = jumlah sulur yang menjalar."""
+    m = [["."] * w for _ in range(h)]
+    dalam = [rnd.randint(*solid) for _ in range(w)]
+    for x in range(w):
+        for y in range(min(h, dalam[x])):
+            m[y][x] = "D" if rnd.random() > 0.2 else "d"
+    for _ in range(sulur):
+        x = rnd.randrange(w)
+        y = min(h - 1, dalam[x])
+        panjang = rnd.randint(h // 3, h)
+        for _i in range(panjang):
+            if y >= h:
+                break
+            m[y][x] = "X" if rnd.random() < 0.15 else "D"
+            y += 1
+            if rnd.random() < 0.4:
+                x = max(0, min(w - 1, x + rnd.choice((-1, 1))))
+    # retakan merah menyala di area pejal
+    for y in range(h):
+        for x in range(w):
+            if m[y][x] in "Dd" and rnd.random() < merah:
+                m[y][x] = "X"
+    return m
+
+
+def lukis_matriks(img, x0, y0, m):
+    for y, baris in enumerate(m):
+        for x, c in enumerate(baris):
+            img.putpixel((x0 + x, y0 + y), warna(c) if c != "." else KOSONG)
+
+
+def lukis_gaya_elytra(img, u, v, w, h, d, gaya, rnd):
+    pos = kotak_uv(u, v, w, h, d)
+    for nama, (x0, y0, fw, fh) in pos.items():
+        if gaya == "selaput":
+            m = muka_selaput(fw, fh, rnd) if nama in ("depan", "belakang") else [["D"] * fw for _ in range(fh)]
+        elif gaya == "api":
+            m = muka_api(fw, fh, rnd) if nama in ("depan", "belakang") else [["."] * fw for _ in range(fh)]
+        elif gaya == "tulang":
+            m = [["x" if (y == 0 and nama not in ("atas", "bawah") and rnd.random() < 0.5) else rnd.choice("DDDd") for _x in range(fw)] for y in range(fh)]
+        elif gaya == "merah":
+            m = [["x" if rnd.random() < 0.3 else "X" for _x in range(fw)] for _y in range(fh)]
+        elif gaya == "rambat_penuh":
+            m = muka_rambatan(fw, fh, rnd, (fh, fh), 0, 0.1)
+            if nama == "bawah":
+                m = [["D"] * fw for _ in range(fh)]
+        elif gaya == "rambat_badan":
+            if nama in ("atas",):
+                m = [["D"] * fw for _ in range(fh)]
+            elif nama == "bawah":
+                m = [["."] * fw for _ in range(fh)]
+            else:
+                m = muka_rambatan(fw, fh, rnd, (fh // 3, fh // 2 + 2), max(2, fw // 2))
+        elif gaya == "rambat_tipis":
+            if nama == "atas":
+                m = [["D"] * fw for _ in range(fh)]
+            elif nama == "bawah":
+                m = [["."] * fw for _ in range(fh)]
+            else:
+                m = muka_rambatan(fw, fh, rnd, (1, 3), 2, 0.05)
+        elif gaya == "rambat_wajah":
+            m = [["."] * fw for _ in range(fh)]
+            if nama == "depan":
+                pola = [
+                    "........",
+                    "........",
+                    "......D.",
+                    ".....DXD",
+                    ".DX..XD.",
+                    ".....D.D",
+                    "......D.",
+                    "....DD.D",
+                ]
+                m = [list(b) for b in pola]
+            elif nama == "kiri":  # sisi kiri kepala Asta (lengan iblis)
+                m = muka_rambatan(fw, fh, rnd, (0, 0), 3, 0)
+                m = m[::-1]  # menjalar dari leher ke atas
+            elif nama == "bawah":
+                m = [["D"] * fw for _ in range(fh)]
+        else:
+            m = [[rnd.choice("DDd") for _x in range(fw)] for _y in range(fh)]
+        lukis_matriks(img, x0, y0, m)
+
+
+# (bone, origin, size, gaya, inflate)
+SAYAP_KIRI = [
+    # tulang lengan sayap (naik ke luar) + cakar di ujung
+    ("left_wing", [-6, 19, 0.5], [6, 2, 1], "tulang", 0),
+    ("left_wing", [-11, 20, 0.5], [5, 2, 1], "tulang", 0),
+    ("left_wing", [-15, 21, 0.5], [4, 2, 1], "tulang", 0),
+    ("left_wing", [-16, 23, 0.5], [1, 3, 1], "merah", 0),
+    ("left_wing", [-9, 22, 0.5], [1, 2, 1], "tulang", 0),
+    ("left_wing", [-13, 23, 0.5], [1, 2, 1], "tulang", 0),
+    # jari sayap (bertingkat ke bawah & ke luar)
+    ("left_wing", [-15.5, 17, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-16.0, 13, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-16.5, 9, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-17.0, 5, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-11.0, 16, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-11.5, 12, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-12.0, 8, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-12.5, 4, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-13.0, 0, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-6.0, 15, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-6.5, 11, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-7.0, 7, 0.5], [1, 4, 1], "tulang", 0),
+    ("left_wing", [-7.5, 3, 0.5], [1, 4, 1], "tulang", 0),
+    # selaput robek di antara jari
+    ("left_wing", [-17, 2, 0.75], [6, 19, 0.5], "selaput", 0),
+    ("left_wing", [-11, -1, 0.75], [5, 21, 0.5], "selaput", 0),
+    ("left_wing", [-6, 3, 0.75], [4, 16, 0.5], "selaput", 0),
+    ("left_wing", [-2, 8, 0.75], [2, 11, 0.5], "selaput", 0),
+    # lidah api hitam di atas sayap
+    ("left_wing", [-4, 21, 0.75], [2, 3, 0.5], "api", 0),
+    ("left_wing", [-8, 22, 0.75], [2, 4, 0.5], "api", 0),
+    ("left_wing", [-12, 23, 0.75], [2, 3, 0.5], "api", 0),
+    ("left_wing", [-15, 24, 0.75], [1, 3, 0.5], "api", 0),
+]
+
+RAMBATAN = [
+    ("body", [-4, 12, -2], [8, 12, 4], "rambat_badan", 0.3),
+    ("body", [-0.5, 20, 2.3], [1, 2, 1], "merah", 0),
+    ("body", [-0.5, 16, 2.3], [1, 2, 1], "merah", 0),
+    ("head", [-4, 24, -4], [8, 8, 8], "rambat_wajah", 0.3),
+    ("rightArm", [-8, 12, -2], [4, 12, 4], "rambat_tipis", 0.3),
+    ("leftArm", [4, 12, -2], [4, 12, 4], "rambat_penuh", 0.3),
+    ("leftArm", [6.5, 9, -2.5], [1, 2, 1], "merah", 0),
+    ("leftArm", [6.5, 9, -0.5], [1, 2, 1], "merah", 0),
+    ("leftArm", [6.5, 9, 1.5], [1, 2, 1], "merah", 0),
+]
+
+
+def elytra_iblis():
+    """Kembalikan (tekstur, geometri JSON, kubus untuk pratinjau)."""
+    rnd = random.Random(1717)
+    img = kanvas(*ELYTRA_TEX)
+    penata = Penata(0, 0, ELYTRA_TEX)
+    tulang = {}
+    pr = []
+
+    def tambah(bone, origin, size, uv, inf, mirror=False):
+        c = {"origin": origin, "size": size, "uv": list(uv)}
+        if inf:
+            c["inflate"] = inf
+        if mirror:
+            c["mirror"] = True
+        tulang.setdefault(bone, []).append(c)
+        pr.append((bone, origin, size, uv, inf, mirror))
+
+    for bone, origin, size, gaya, inf in SAYAP_KIRI + RAMBATAN:
+        u, v = penata.tempat(*size_int(size))
+        lukis_gaya_elytra(img, u, v, *size_int(size), gaya, rnd)
+        tambah(bone, origin, size, (u, v), inf)
+        if bone == "left_wing":  # sayap kanan = cermin sayap kiri
+            tambah("right_wing", cermin_x(origin, size), size, (u, v), inf, True)
+
+    susunan = [
+        ("body", None, [0, 24, 0]),
+        ("head", "body", [0, 24, 0]),
+        ("rightArm", "body", [-5, 22, 0]),
+        ("leftArm", "body", [5, 22, 0]),
+        ("left_wing", "body", [0, 24, 0]),
+        ("right_wing", "body", [0, 24, 0]),
+    ]
+    bones = []
+    for nama, induk_, pivot in susunan:
+        b = {"name": nama, "pivot": pivot}
+        if induk_:
+            b["parent"] = induk_
+        if nama in tulang:
+            b["cubes"] = tulang[nama]
+        bones.append(b)
+    geo = {
+        "format_version": "1.16.0",
+        "minecraft:geometry": [{
+            "description": {
+                "identifier": "geometry.asta.elytra_iblis",
+                "texture_width": ELYTRA_TEX[0], "texture_height": ELYTRA_TEX[1],
+                "visible_bounds_width": 5, "visible_bounds_height": 4,
+                "visible_bounds_offset": [0, 1.5, 0],
+            },
+            "bones": bones,
+        }],
+    }
+    return img, geo, pr
+
+
+def attachable_elytra_json():
+    # Menimpa attachable vanilla "minecraft:elytra": model diganti, animasi
+    # bawaan (diam, jongkok, meluncur, tidur, berenang) tetap dipakai karena
+    # nama tulang sayap sama (body, left_wing, right_wing).
+    return {
+        "format_version": "1.10.0",
+        "minecraft:attachable": {
+            "description": {
+                "identifier": "minecraft:elytra",
+                "materials": {"default": "armor", "enchanted": "armor_enchanted"},
+                "textures": {"default": ELYTRA_TEXTURE, "enchanted": "textures/misc/enchanted_actor_glint"},
+                "geometry": {"default": "geometry.asta.elytra_iblis"},
+                "animations": {
+                    "default_controller": "controller.animation.elytra.default",
+                    "default": "animation.elytra.default",
+                    "gliding": "animation.elytra.gliding",
+                    "sneaking": "animation.elytra.sneaking",
+                    "sleeping": "animation.elytra.sleeping",
+                    "swimming": "animation.elytra.swimming",
+                },
+                "scripts": {"parent_setup": "variable.chest_layer_visible = 0.0;", "animate": ["default_controller"]},
+                "render_controllers": ["controller.render.armor"],
+            }
+        },
+    }
+
+
+def render_belakang(skin):
+    """Gambar 16x32 tampak belakang skin (kiri layar = sisi kiri pemain)."""
+    img = Image.new("RGBA", (16, 32), (0, 0, 0, 0))
+
+    def tempel(u, v, w, h, d, x, y):
+        x0, y0, fw, fh = kotak_uv(u, v, w, h, d)["belakang"]
+        f = skin.crop((x0, y0, x0 + fw, y0 + fh))
+        f.putalpha(f.split()[3].point(lambda a: 255 if a else 0))
+        img.alpha_composite(f, (x, y))
+
+    for base, lap in (((0, 0, 8, 8, 8), (32, 0, 8, 8, 8)),):
+        tempel(*base, 4, 0)
+        tempel(*lap, 4, 0)
+    tempel(16, 16, 8, 12, 4, 4, 8)
+    tempel(16, 32, 8, 12, 4, 4, 8)
+    tempel(32, 48, 4, 12, 4, 0, 8)   # lengan kiri
+    tempel(48, 48, 4, 12, 4, 0, 8)
+    tempel(40, 16, 4, 12, 4, 12, 8)  # lengan kanan
+    tempel(16, 48, 4, 12, 4, 4, 20)  # kaki kiri
+    tempel(0, 48, 4, 12, 4, 4, 20)
+    tempel(0, 16, 4, 12, 4, 8, 20)   # kaki kanan
+    tempel(0, 32, 4, 12, 4, 8, 20)
+    return img
+
+
+def render_orto(dasar, tex, kubus, sisi="depan", S=8, lebar=40, atas=39, tinggi=46):
+    """Proyeksi ortografis sederhana (rotasi kubus diabaikan).
+
+    dasar: gambar skin 16x32 dari sisi yang sama. Kanvas: x -lebar/2..lebar/2,
+    y dari `atas` ke `atas - tinggi`."""
+    img = Image.new("RGBA", (lebar * S, tinggi * S), (0, 0, 0, 0))
+    img.alpha_composite(dasar.resize((16 * S, 32 * S), Image.NEAREST), ((lebar // 2 - 8) * S, (atas - 32) * S))
+    if sisi == "depan":
+        urut = sorted(kubus, key=lambda k: -(k[1][2] - k[4]))
+    else:
+        urut = sorted(kubus, key=lambda k: k[1][2] + k[2][2] + k[4])
+    for _bone, origin, size, uv, inf, mirror in urut:
+        w, h, d = size_int(size)
+        x0, y0, fw, fh = kotak_uv(uv[0], uv[1], w, h, d)[sisi]
+        muka = tex.crop((x0, y0, x0 + fw, y0 + fh))
+        if mirror:
+            muka = muka.transpose(Image.FLIP_LEFT_RIGHT)
+        pw, ph = (size[0] + 2 * inf) * S, (size[1] + 2 * inf) * S
+        muka = muka.resize((max(1, round(pw)), max(1, round(ph))), Image.NEAREST)
+        muka.putalpha(muka.split()[3].point(lambda a: 255 if a else 0))
+        kiri = origin[0] - inf if sisi == "depan" else -(origin[0] + size[0] + inf)
+        ty = origin[1] + size[1] + inf
+        img.alpha_composite(muka, (round((kiri + lebar / 2) * S), round((atas - ty) * S)))
+    return img
+
+
+# ===========================================================================
+# Utama
+# ===========================================================================
+def main():
+    skin = skin_asta()
+    a1, a2 = armor_1(), armor_2()
+    sayap = elytra()
+
+    # ---------------- skin pack ----------------
+    simpan(skin, SKIN, "asta.png")
+    simpan(skin_iblis(skin, a1, a2), SKIN, "asta_iblis.png")
+    tulis_json(skin_pack_json(), SKIN, "skins.json")
+    tulis_json(
+        manifest("Asta (Black Clover)", "Skin Asta dari Black Clover", UUID["skin_header"], UUID["skin_module"], "skin_pack"),
+        SKIN, "manifest.json",
+    )
+    tulis_teks(
+        "skinpack.AstaBlackClover=Asta (Black Clover)\n"
+        "skin.AstaBlackClover.asta=Asta\n"
+        "skin.AstaBlackClover.asta_iblis=Asta (Mode Iblis)\n",
+        SKIN, "texts", "en_US.lang",
+    )
+    tulis_json(["en_US"], SKIN, "texts", "languages.json")
+
+    # ---------------- resource pack ----------------
+    # file lama (versi pengganti tekstur Netherite) dihapus
+    for lama in ("textures/models/armor/netherite_1.png", "textures/models/armor/netherite_2.png",
+                 "textures/items/netherite_helmet.png", "textures/items/netherite_chestplate.png",
+                 "textures/items/netherite_leggings.png", "textures/items/netherite_boots.png"):
+        if os.path.exists(os.path.join(RP, lama)):
+            os.remove(os.path.join(RP, lama))
+    # elytra 3D: model vanilla diganti lewat attachable "minecraft:elytra"
+    lama = os.path.join(RP, "textures", "models", "armor", "elytra.png")
+    if os.path.exists(lama):
+        os.remove(lama)
+    tex_elytra, geo_elytra, kubus_elytra = elytra_iblis()
+    simpan(tex_elytra, RP, ELYTRA_TEXTURE + ".png")
+    tulis_json(geo_elytra, RP, "models", "entity", "asta_elytra_iblis.geo.json")
+    tulis_json(attachable_elytra_json(), RP, "attachables", "elytra.json")
+    simpan(ikon_grid(IKON_VANILLA["elytra"]), RP, "textures", "items", "elytra.png")
+
+    tekstur_item = {}
+    sprites = []
+    teks_en = ["## Asta - Black Clover"]
+    teks_id = ["## Asta - Black Clover"]
+
+    # ---------------- armor Penyatuan Iblis (bentuk 3D sendiri) ----------------
+    tex_armor, geo_armor, kubus_armor = tekstur_dan_geometri_armor(a1, a2)
+    simpan(tex_armor, RP, ARMOR_TEXTURE + ".png")
+    ikon_vanilla = {"iblis_helm": "netherite_helmet", "iblis_zirah": "netherite_chestplate",
+                    "iblis_celana": "netherite_leggings", "iblis_sepatu": "netherite_boots"}
+    for id_, en, nama_id, slot, prot, dur, vanilla, ench, lapisan in ARMOR:
+        tulis_json(geo_armor[id_], RP, "models", "entity", f"asta_{id_}.geo.json")
+        tulis_json(attachable_armor_json(id_, lapisan), RP, "attachables", f"asta_{id_}.json")
+        simpan(ikon_grid(IKON_VANILLA[ikon_vanilla[id_]]), RP, "textures", "items", "asta", f"{id_}.png")
+        tekstur_item[f"asta_{id_}"] = {"textures": f"textures/items/asta/{id_}"}
+        teks_en.append(f"item.asta:{id_}.name={en}")
+        teks_id.append(f"item.asta:{id_}.name={nama_id}")
+        tulis_json(item_armor_json(id_, slot, prot, dur, ench), BP, "items", f"{id_}.json")
+        tulis_json(resep_armor_json(id_, vanilla), BP, "recipes", f"{id_}.json")
+    for id_, buat, ingot, en, nama_id, dmg, dur in PEDANG:
+        spr, W, L, hc = buat()
+        outline(spr)
+        sprites.append((spr, W, L, hc))
+        simpan(spr, RP, "textures", "asta", "pedang", f"{id_}.png")
+        simpan(ikon_pedang(spr, L), RP, "textures", "items", "asta", f"{id_}.png")
+        tekstur_item[f"asta_{id_}"] = {"textures": f"textures/items/asta/{id_}"}
+        tulis_json(geometri_json(id_, W, L, hc), RP, "models", "entity", f"asta_{id_}.geo.json")
+        tulis_json(attachable_json(id_), RP, "attachables", f"asta_{id_}.json")
+        teks_en.append(f"item.asta:{id_}.name={en}")
+        teks_id.append(f"item.asta:{id_}.name={nama_id}")
+
+        tulis_json(item_json(id_, dmg, dur), BP, "items", f"{id_}.json")
+        tulis_json(resep_json(id_, ingot), BP, "recipes", f"{id_}.json")
+
+    tulis_json(animasi_json(), RP, "animations", "asta_pedang.animation.json")
+    tulis_json({"resource_pack_name": "asta", "texture_name": "atlas.items", "texture_data": tekstur_item},
+               RP, "textures", "item_texture.json")
+    tulis_teks("\n".join(teks_en) + "\n", RP, "texts", "en_US.lang")
+    tulis_teks("\n".join(teks_id) + "\n", RP, "texts", "id_ID.lang")
+    tulis_json(["en_US", "id_ID"], RP, "texts", "languages.json")
+    tulis_json(
+        manifest("Asta §cRP", "Armor iblis, elytra sayap iblis, dan 4 pedang Asta (Black Clover).",
+                 UUID["rp_header"], UUID["rp_module"], "resources"),
+        RP, "manifest.json",
+    )
+    tulis_json(manifest_bp(), BP, "manifest.json")
+    ikon = ikon_pack(skin, a1)
+    simpan(ikon, RP, "pack_icon.png")
+    simpan(ikon, BP, "pack_icon.png")
+    simpan(ikon_pack(skin, latar="#2b2b33"), SKIN, "pack_icon.png")
+
+    # ---------------- dokumentasi ----------------
+    berarmor = render_armor_depan(skin, tex_armor, list(kubus_armor.values()))
+    simpan(pratinjau(skin, berarmor, sayap, sprites), DOCS, "pratinjau.png")
+    simpan(pratinjau_elytra(skin, tex_elytra, kubus_elytra), DOCS, "pratinjau_elytra.png")
+    simpan(skin.resize((256, 256), Image.NEAREST), DOCS, "skin_asta_x4.png")
+    lembar = Image.new("RGBA", (len(sprites) * 40, 40), hex2rgb("#e9e4dc"))
+    for i, (id_, *_r) in enumerate(PEDANG):
+        lembar.alpha_composite(Image.open(os.path.join(RP, "textures", "items", "asta", f"{id_}.png")), (i * 40 + 4, 4))
+    simpan(lembar.resize((lembar.width * 4, lembar.height * 4), Image.NEAREST), DOCS, "ikon_pedang.png")
+    print("Selesai.")
+
+
+if __name__ == "__main__":
+    main()

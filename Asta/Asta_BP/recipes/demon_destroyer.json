@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "asta:demon_destroyer"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "tag": "minecraft:is_sword"
+      },
+      {
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "asta:demon_destroyer",
+      "count": 1
+    }
+  }
+}

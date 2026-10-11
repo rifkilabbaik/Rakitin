@@ -1,0 +1,59 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Asta §cBP",
+    "description": "Pedang iblis & armor Penyatuan Iblis Asta, lengkap dengan kekuatan sesuai lore.",
+    "uuid": "8e63df46-074f-4ba6-b764-50761c5d9263",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "91df387d-3a25-43b7-a043-23004968a1ad",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "a52a3d4b-40da-4afa-b576-5ac612ccdf5f",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Rakitin"
+    ]
+  },
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.4.0"
+    },
+    {
+      "uuid": "99fd278e-fca4-443d-85b3-c81b3eecf5c7",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

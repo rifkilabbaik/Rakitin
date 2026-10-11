@@ -1,0 +1,63 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Waguri YSM §dBP",
+    "description": "Pilih model anime lewat Lemari Model (klik kanan). Tanpa eksperimen.",
+    "uuid": "7da3e9ba-43a4-49e5-ac32-7952beb16419",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "2f0ce5b9-37e3-4527-9e4b-79eca58d2f9b",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "f011d4b9-98c4-4ae0-9fd7-120c2df071b5",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Rakitin"
+    ]
+  },
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.4.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
+    },
+    {
+      "uuid": "97a61f27-8cac-42ba-8600-7f369f60f5bf",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
