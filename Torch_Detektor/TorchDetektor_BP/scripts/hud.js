@@ -41,11 +41,16 @@ export function teksHud(player, st) {
     if (!lama || j < lama.j) terdekat[b.i] = { j, dx, dy, dz };
   }
 
-  // Jenis yang tampil dipilih menurut urutan tabel ORE (prioritas), maks 3.
-  const entri = [];
-  for (let i = 0; i < ORE.length && entri.length < MAKS_HUD; i++) {
+  // Pilih 3 jenis dengan ore terdekat; bila jaraknya sama, urutan tabel ORE jadi pemecah seri.
+  const kandidat = [];
+  for (let i = 0; i < ORE.length; i++) {
     const t = terdekat[i];
-    if (!t) continue;
+    if (t) kandidat.push({ t, i });
+  }
+  kandidat.sort((a, b) => a.t.j - b.t.j || a.i - b.i);
+
+  const entri = [];
+  for (const { t, i } of kandidat.slice(0, MAKS_HUD)) {
     const o = ORE[i];
     let arah = panahArah(yaw, t.dx, t.dz);
     if (t.dy >= 2) arah += "▲";

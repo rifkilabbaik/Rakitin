@@ -258,8 +258,6 @@ world.afterEvents.worldLoad.subscribe(() => {
   system.afterEvents.scriptEventReceive.subscribe(
     (e) => {
       if (e.id !== ID_ORE) return;
-      // Hanya terima dari script (system.sendScriptEvent), bukan /scriptevent oleh pemain/blok/NPC.
-      if (e.sourceEntity || e.sourceBlock || e.initiator) return;
       terimaOre(e.message);
     },
     { namespaces: ["td"] }

@@ -131,10 +131,10 @@ function gambarOutline(player, b) {
   const m = molang(b.i);
   const cx = b.x + 0.5;
   const cz = b.z + 0.5;
-  partikel(player, PARTIKEL_XZ, cx, b.y + 1.001, cz, m);
-  partikel(player, PARTIKEL_XZ, cx, b.y - 0.001, cz, m);
-  partikel(player, PARTIKEL_XY, cx, b.y + 0.5, b.z - 0.001, m);
-  partikel(player, PARTIKEL_XY, cx, b.y + 0.5, b.z + 1.001, m);
+  partikel(player, PARTIKEL_XZ, cx, b.y + 1.01, cz, m);
+  partikel(player, PARTIKEL_XZ, cx, b.y - 0.01, cz, m);
+  partikel(player, PARTIKEL_XY, cx, b.y + 0.5, b.z - 0.01, m);
+  partikel(player, PARTIKEL_XY, cx, b.y + 0.5, b.z + 1.01, m);
 }
 
 // --- Dipanggil deteksi.js -------------------------------------------------

@@ -4,7 +4,7 @@ export const ID_OBOR = "td:obor_detektor";
 export const TAG_BELIUNG = "minecraft:is_pickaxe";
 
 /**
- * Daftar ore yang bisa dideteksi. Urutan = prioritas tampilan HUD.
+ * Daftar ore yang bisa dideteksi. Urutan = pemecah seri HUD bila jarak sama.
  * `warna` = RRGGBB (tanpa #) untuk outline; `kode` = kode warna teks § yang paling mirip.
  * @type {{ kunci: string, nama: string, warna: string, kode: string, blok: string[] }[]}
  */
