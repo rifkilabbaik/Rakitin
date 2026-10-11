@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Torch Detektor §dX-Ray (Beta)",
+    "description": "Opsional, butuh eksperimen Beta APIs: outline ore berwarna terlihat menembus dinding, hanya untuk pemegang Obor Detektor. Pasang bersama Torch Detektor BP.",
+    "uuid": "1cddd970-f376-44c6-8762-300a14df4e20",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "a530845e-6b7a-409b-a36a-a547aa7f817b",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.4.0"
+    },
+    {
+      "module_name": "@minecraft/debug-utilities",
+      "version": "1.0.0-beta"
+    },
+    {
+      "uuid": "8cb0309f-4e28-40ff-8bf3-549fe4cc51bb",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Torch Detektor"
+    ]
+  }
+}

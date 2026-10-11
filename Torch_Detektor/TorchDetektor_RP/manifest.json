@@ -1,0 +1,44 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Torch Detektor §aRP",
+    "description": "Tekstur Obor Detektor dan partikel outline ore berwarna.",
+    "uuid": "006160db-42e3-4049-8301-19764fbb6338",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "056f8cfb-24f4-4d51-b4e5-2c998c5cc0c3",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "8cb0309f-4e28-40ff-8bf3-549fe4cc51bb",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Torch Detektor"
+    ]
+  }
+}

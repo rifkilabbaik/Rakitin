@@ -1,0 +1,6 @@
+## Torch Detektor - teks bahasa Indonesia
+
+pack.name=Torch Detektor
+pack.description=Obor Detektor di tangan kiri + beliung di tangan kanan untuk mendeteksi ore di dekatmu.
+
+item.td:obor_detektor.name=Obor Detektor

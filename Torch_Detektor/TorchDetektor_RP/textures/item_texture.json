@@ -1,0 +1,9 @@
+{
+  "resource_pack_name": "torch_detektor",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "td_obor_detektor": {
+      "textures": "textures/items/obor_detektor"
+    }
+  }
+}
