@@ -2,7 +2,7 @@
 import { BlockVolume, EquipmentSlot, system, world } from "@minecraft/server";
 import { OBOR, ORE, ORE_PER_BLOK } from "./data.js";
 import { atur, versiAtur } from "./pengaturan.js";
-import { arahKe, barSibuk, itemTangan, jarak, partikelPenunjuk, pesanBar } from "./util.js";
+import { arahKe, barSibuk, itemTangan, jarak, partikelPenunjuk } from "./util.js";
 
 /** Cache per pemain: posisi pindai terakhir + daftar ore. */
 const cache = new Map();
@@ -96,7 +96,7 @@ export function mulaiDetektor() {
   system.runInterval(() => {
     for (const p of world.getAllPlayers()) {
       if (!detektorAktif(p)) {
-        if (cache.delete(p.id)) pesanBar(p, "§7Ore Detector OFF");
+        cache.delete(p.id);
         continue;
       }
       try {

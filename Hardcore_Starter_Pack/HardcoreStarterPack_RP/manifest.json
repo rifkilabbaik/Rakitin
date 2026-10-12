@@ -1,0 +1,44 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Hardcore Starter Pack RP",
+    "description": "Nama & ikon Torch Detector dan Compass Finder (memakai tekstur vanilla).",
+    "uuid": "c9bc09f8-587c-4b2e-9be4-6213441736ad",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "4da46db7-2311-47a1-bc7f-fe43774d8754",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "ba3277af-1d0d-4c8e-ac6b-76650621117e",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Hardcore Starter Pack"
+    ]
+  }
+}

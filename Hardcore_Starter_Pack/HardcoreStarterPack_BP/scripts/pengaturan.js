@@ -56,7 +56,7 @@ export function lupakanPemain(id) {
 }
 
 // --- Offhand -------------------------------------------------------------------
-/** Tukar isi tangan kanan dan tangan kiri (offhand menerima item apa pun). */
+/** Tukar isi tangan kanan dan tangan kiri. */
 export function tukarTangan(player) {
   const eq = perlengkapan(player);
   if (!eq) return;
@@ -66,10 +66,33 @@ export function tukarTangan(player) {
     pesanBar(player, "§7Kedua tangan kosong.");
     return;
   }
-  eq.setEquipment(EquipmentSlot.Offhand, kanan);
+  let berhasil = true;
+  try {
+    eq.setEquipment(EquipmentSlot.Offhand, kanan);
+  } catch {
+    berhasil = false;
+  }
+  if (kanan && eq.getEquipment(EquipmentSlot.Offhand)?.typeId !== kanan.typeId) berhasil = false;
+  // Tangan kiri vanilla menolak sebagian item: coba lewat perintah untuk item polos.
+  if (!berhasil && kanan && !kanan.nameTag && !kanan.getComponent("minecraft:enchantable")?.getEnchantments().length) {
+    try {
+      player.runCommand(`replaceitem entity @s slot.weapon.offhand 0 ${kanan.typeId} ${kanan.amount}`);
+      berhasil = eq.getEquipment(EquipmentSlot.Offhand)?.typeId === kanan.typeId;
+    } catch {
+      berhasil = false;
+    }
+  }
+  if (!berhasil) {
+    try {
+      eq.setEquipment(EquipmentSlot.Offhand, kiri);
+    } catch {
+      // biarkan
+    }
+    pesanBar(player, "§cItem ini tidak bisa dipegang di tangan kiri. §7Pakai §fTorch Detector§7 / §fCompass Finder§7.");
+    return;
+  }
   eq.setEquipment(EquipmentSlot.Mainhand, kiri);
   suara(player.dimension, "armor.equip_generic", player.location);
-  pesanBar(player, kanan ? "§aItem dipindah ke tangan kiri." : "§aItem dipindah ke tangan kanan.");
 }
 
 // --- Form ------------------------------------------------------------------------

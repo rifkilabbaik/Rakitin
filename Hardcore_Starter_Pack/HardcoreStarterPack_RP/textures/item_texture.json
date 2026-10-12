@@ -1,0 +1,12 @@
+{
+  "resource_pack_name": "hardcore_starter_pack",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "hsp_torch_detector": {
+      "textures": "textures/blocks/torch_on"
+    },
+    "hsp_compass_finder": {
+      "textures": "textures/items/compass_item"
+    }
+  }
+}

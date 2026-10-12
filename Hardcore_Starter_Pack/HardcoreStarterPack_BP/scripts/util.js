@@ -125,18 +125,21 @@ export class Kumpulan {
     }
   }
 
+  /** Jatuhkan semua item; mengembalikan entitas item yang dibuat. */
   jatuhkan(dimensi, lokasi) {
+    const hasil = [];
     for (const [id, total] of this.jumlah) {
       let sisa = total;
       while (sisa > 0) {
         const stack = new ItemStack(id, 1);
         const n = Math.min(sisa, stack.maxAmount);
         stack.amount = n;
-        dimensi.spawnItem(stack, lokasi);
+        hasil.push(dimensi.spawnItem(stack, lokasi));
         sisa -= n;
       }
     }
-    for (const item of this.khusus) dimensi.spawnItem(item, lokasi);
+    for (const item of this.khusus) hasil.push(dimensi.spawnItem(item, lokasi));
+    return hasil;
   }
 }
 

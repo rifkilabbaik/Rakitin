@@ -149,5 +149,6 @@ export function tierDibutuhkan(blok) {
   return 0;
 }
 
-export const OBOR = new Set([M("torch"), M("soul_torch"), M("copper_torch")]);
-export const KOMPAS = new Set([M("compass")]);
+/** Item yang menyalakan Ore Detector / Compass Finder saat berada di tangan kiri. */
+export const OBOR = new Set(["hsp:torch_detector", M("torch"), M("soul_torch"), M("copper_torch")]);
+export const KOMPAS = new Set(["hsp:compass_finder", M("compass")]);

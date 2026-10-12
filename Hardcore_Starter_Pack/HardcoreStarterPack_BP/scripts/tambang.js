@@ -4,13 +4,14 @@
 // dibatalkan lalu script memecah blok asal + blok tambahan sendiri:
 // - drop dibuat lewat loot table vanilla memakai alat pemain (Fortune/Silk Touch ikut berlaku),
 // - daya tahan alat berkurang 1 per blok (Unbreaking tetap dihitung),
-// - hanya blok vanilla yang disentuh, supaya tidak bentrok dengan blok addon lain.
+// - hanya blok vanilla yang disentuh, supaya tidak bentrok dengan blok addon lain,
+// - blok dihancurkan bertahap (gelombang dari blok asal) dengan partikel & suara hancur vanilla.
 import { GameMode, ItemStack, system, world } from "@minecraft/server";
 import {
   BATANG, BLOK_SEKOP, BUAH, DAUN, DAUN_NETHER, LEBUR, ORE_PER_BLOK, TANAMAN, TERLARANG, tierAlat, tierDibutuhkan,
 } from "./data.js";
 import { atur } from "./pengaturan.js";
-import { Kumpulan, acak, blokAman, pesanBar, suara } from "./util.js";
+import { Kumpulan, acak, blokAman, suara } from "./util.js";
 
 const TETANGGA = [];
 for (let dx = -1; dx <= 1; dx++)
@@ -19,7 +20,8 @@ for (let dx = -1; dx <= 1; dx++)
 const MAKS_DAUN = 1024;
 const JARAK_DAUN = 6;
 const MAKS_PANEN = 256;
-const BLOK_PER_TICK = 12;
+/** Lama animasi gelombang hancur (tick) untuk Vein Miner / Capitator. */
+const LAMA_ANIMASI = 20;
 
 /** Pemain yang sedang diproses (mencegah dua proses bersamaan). */
 const sibuk = new Set();
@@ -188,17 +190,55 @@ function sasaran3x3(dim, asal, jenis, alat) {
 }
 
 // --- Memecah blok ---------------------------------------------------------------
-function tanamUlang(blok, drop) {
-  const t = TANAMAN.get(blok.typeId);
+function tanamUlang(blok, permAsal, drop) {
+  const t = TANAMAN.get(permAsal.type.id);
   if (!t) return false;
   const bibit = drop.find((it) => it.typeId === t.bibit && it.amount > 0);
   if (!bibit) return false;
   if (bibit.amount > 1) bibit.amount -= 1;
   else drop.splice(drop.indexOf(bibit), 1);
   /** @type {any} */
-  const perm = blok.permutation;
+  const perm = permAsal;
   blok.setPermutation(perm.withState(t.state, 0));
   return true;
+}
+
+// --- Animasi hancur -------------------------------------------------------------
+// "setblock ... destroy" menampilkan partikel & suara hancur vanilla, tetapi juga menjatuhkan
+// drop vanilla (tanpa Fortune/Silk Touch). Drop vanilla itu langsung dihapus di sini;
+// drop yang benar dibuat sendiri lewat loot table dengan alat pemain.
+/** @type {{d: string, x: number, y: number, z: number, sampai: number}[]} */
+const ditekan = [];
+/** Entitas item milik addon ini yang tidak boleh dihapus. */
+const milikKita = new Set();
+
+function hancurkanDenganEfek(dim, lok, blok) {
+  ditekan.push({ d: dim.id, x: lok.x + 0.5, y: lok.y + 0.5, z: lok.z + 0.5, sampai: system.currentTick + 3 });
+  try {
+    dim.runCommand(`setblock ${lok.x} ${lok.y} ${lok.z} air destroy`);
+  } catch {
+    blok.setType("minecraft:air");
+  }
+}
+
+function tekanDropVanilla(entity, tickMuncul) {
+  if (milikKita.delete(entity.id)) return;
+  while (ditekan.length && ditekan[0].sampai < system.currentTick - 3) ditekan.shift();
+  if (!ditekan.length) return;
+  let l;
+  try {
+    l = entity.location;
+  } catch {
+    return;
+  }
+  const d = entity.dimension.id;
+  for (const t of ditekan) {
+    if (t.sampai < tickMuncul) continue;
+    if (t.d === d && Math.abs(t.x - l.x) <= 1 && Math.abs(t.y - l.y) <= 1 && Math.abs(t.z - l.z) <= 1) {
+      entity.remove();
+      return;
+    }
+  }
 }
 
 /**
@@ -216,7 +256,9 @@ function pecahkan(dim, lok, alat, opsi, kumpulan) {
   } catch {
     drop = [];
   }
-  if (!(opsi.tanamUlang && tanamUlang(blok, drop))) blok.setType("minecraft:air");
+  const permAsal = blok.permutation;
+  hancurkanDenganEfek(dim, lok, blok);
+  if (opsi.tanamUlang) tanamUlang(blok, permAsal, drop);
 
   for (const it of drop) {
     const hasil = opsi.lebur ? LEBUR.get(it.typeId) : undefined;
@@ -225,9 +267,6 @@ function pecahkan(dim, lok, alat, opsi, kumpulan) {
   const ore = ORE_PER_BLOK.get(id);
   return ore && !opsi.silk ? acak(ore.xp[0], ore.xp[1]) : 0;
 }
-
-const JUDUL = { vein: "Vein Miner", pohon: "Tree Capitator", panen: "Crop Capitator", "3x3": "3x3x3 Mining", tunggal: "Auto Smelt" };
-const SUARA = { vein: "dig.stone", "3x3": "dig.stone", tunggal: "dig.stone", pohon: "dig.wood", panen: "dig.grass" };
 
 function jalankan(player, dim, asal, idAwal, mode, slot) {
   const inv = player.getComponent("minecraft:inventory")?.container;
@@ -258,37 +297,46 @@ function jalankan(player, dim, asal, idAwal, mode, slot) {
   let patah = false;
   const kumpulan = new Kumpulan();
   let xp = 0;
-  let jumlah = 0;
 
-  system.runJob(
-    (function* () {
-      try {
-        for (const lok of daftar) {
-          if (!player.isValid) break;
-          xp += pecahkan(dim, lok, alat, opsi, kumpulan);
-          jumlah++;
-          // Daya tahan: 1 per blok, dengan peluang Unbreaking 1/(level+1).
-          if (dur && Math.random() < 1 / (unbreaking + 1)) {
-            damage++;
-            if (damage > maks) {
-              patah = true;
-              break;
-            }
-          }
-          if (jumlah % BLOK_PER_TICK === 0) yield;
+  // 3x3x3 pecah sekaligus; fitur lain bergelombang dari blok asal selama ±1 detik.
+  const sekaligus = mode === "3x3" || mode === "tunggal";
+  const perTick = sekaligus ? daftar.length : Math.max(1, Math.ceil(daftar.length / LAMA_ANIMASI));
+  // Rantai pendek dibuat sedikit lebih lambat supaya gelombangnya terlihat.
+  const jeda = !sekaligus && daftar.length <= 10 ? 2 : 1;
+  let indeks = 0;
+  const putaran = system.runInterval(() => {
+    let berhenti = false;
+    try {
+      for (let i = 0; i < perTick && indeks < daftar.length; i++) {
+        if (!player.isValid) {
+          berhenti = true;
+          break;
         }
-      } finally {
-        selesai();
+        xp += pecahkan(dim, daftar[indeks++], alat, opsi, kumpulan);
+        // Daya tahan: 1 per blok, dengan peluang Unbreaking 1/(level+1).
+        if (dur && Math.random() < 1 / (unbreaking + 1)) {
+          damage++;
+          if (damage > maks) {
+            patah = true;
+            berhenti = true;
+            break;
+          }
+        }
       }
-    })()
-  );
+    } catch {
+      berhenti = true;
+    }
+    if (berhenti || indeks >= daftar.length) {
+      system.clearRun(putaran);
+      selesai();
+    }
+  }, jeda);
 
   function selesai() {
     sibuk.delete(player.id);
-    kumpulan.jatuhkan(dim, { x: asal.x + 0.5, y: asal.y + 0.5, z: asal.z + 0.5 });
+    for (const e of kumpulan.jatuhkan(dim, { x: asal.x + 0.5, y: asal.y + 0.5, z: asal.z + 0.5 })) milikKita.add(e.id);
     if (!player.isValid) return;
     if (xp > 0) player.addExperience(xp);
-    suara(dim, SUARA[mode] ?? "dig.stone", { x: asal.x + 0.5, y: asal.y + 0.5, z: asal.z + 0.5 });
 
     const sekarang = inv.getItem(slot);
     if (dur && sekarang && sekarang.typeId === alat.typeId) {
@@ -300,10 +348,6 @@ function jalankan(player, dim, asal, idAwal, mode, slot) {
         if (d) d.damage = Math.min(maks, damage);
         inv.setItem(slot, sekarang);
       }
-    }
-    if (jumlah > 1 || mode === "tunggal") {
-      const sisa = dur && !patah ? ` §8| sisa daya tahan ${maks - Math.min(maks, damage)}` : patah ? " §c| alat patah!" : "";
-      pesanBar(player, `§a${JUDUL[mode]}: §f${jumlah} blok${sisa}`);
     }
   }
 }
@@ -333,4 +377,14 @@ export function mulaiTambang() {
   });
 
   world.afterEvents.playerLeave.subscribe(({ playerId }) => sibuk.delete(playerId));
+
+  world.afterEvents.entitySpawn.subscribe(({ entity }) => {
+    if (entity.typeId !== "minecraft:item" && entity.typeId !== "minecraft:xp_orb") return;
+    if (!ditekan.length && !milikKita.size) return;
+    // Diputuskan tick berikutnya, setelah drop milik addon sempat ditandai.
+    const tick = system.currentTick;
+    system.run(() => {
+      if (entity.isValid) tekanDropVanilla(entity, tick);
+    });
+  });
 }

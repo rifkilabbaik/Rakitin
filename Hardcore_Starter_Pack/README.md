@@ -1,7 +1,8 @@
 # Hardcore Starter Pack
 
-Addon fungsi (tanpa mengubah tekstur apa pun) untuk Minecraft Bedrock **1.26.30+** (dibuat untuk **1.26.52**, Play Store).
-Satu behavior pack, **tanpa Beta API**, memakai Script API stabil `@minecraft/server` 2.4.0 dan `@minecraft/server-ui` 2.0.0.
+Addon fungsi (tanpa tekstur baru) untuk Minecraft Bedrock **1.26.30+** (dibuat untuk **1.26.52**, Play Store).
+Behavior pack + resource pack kecil (hanya nama & ikon item yang memakai tekstur vanilla), **tanpa Beta API**,
+memakai Script API stabil `@minecraft/server` 2.4.0 dan `@minecraft/server-ui` 2.0.0.
 
 | Fitur | Cara pakai |
 |---|---|
@@ -11,9 +12,9 @@ Satu behavior pack, **tanpa Beta API**, memakai Script API stabil `@minecraft/se
 | 🌾 **Crop Capitator** | **Jongkok** + panen tanaman matang dengan **cangkul** (otomatis tanam ulang) |
 | 🧱 **3x3x3 Mining** | **Jongkok** + pecah blok biasa dengan **beliung / sekop / kapak** |
 | ✨ **Hold to Enchant** | Pegang item apa pun yang bisa di-enchant → semua enchant level maksimal |
-| ✋ **Offhand** | `/offhand` memindah item apa pun ke tangan kiri |
-| 🔦 **Ore Detector** | **Obor** di tangan kiri → navigasi ke ore terdekat |
-| 🧭 **Compass Finder** | **Kompas** di tangan kiri → navigasi ke struktur terdekat |
+| ✋ **Offhand** | **Torch Detector** & **Compass Finder** bisa dipasang di tangan kiri; `/offhand` menukar tangan |
+| 🔦 **Ore Detector** | **Torch Detector** di tangan kiri → navigasi ke ore terdekat |
+| 🧭 **Compass Finder** | **Compass Finder** di tangan kiri → navigasi ke struktur terdekat |
 | ⚙️ **Menu** | Ketik **`/setting`** di chat |
 
 ---
@@ -21,7 +22,7 @@ Satu behavior pack, **tanpa Beta API**, memakai Script API stabil `@minecraft/se
 ## Cara Pasang
 1. Unduh **[`dist/HardcoreStarterPack.mcaddon`](dist/HardcoreStarterPack.mcaddon)** lalu buka dengan Minecraft.
    (Alternatif: salin folder `HardcoreStarterPack_BP` ke `games/com.mojang/behavior_packs/`.)
-2. Di pengaturan dunia → **Paket Perilaku** → aktifkan **Hardcore Starter Pack**.
+2. Di pengaturan dunia → **Paket Perilaku** → aktifkan **Hardcore Starter Pack** (resource pack-nya ikut aktif otomatis).
 3. Tidak perlu Beta API / eksperimen. Perintah `/setting` dan `/offhand` bisa dipakai **tanpa cheat**.
 
 ---
@@ -33,8 +34,10 @@ Saat kamu jongkok dan memecah blok dengan alat yang cocok, addon mengambil alih 
   (Fortune pada daun → peluang sapling/apel lebih besar; Fortune pada tanaman → panen lebih banyak; Fortune pada ore → lebih banyak).
 - **Daya tahan alat berkurang 1 per blok yang hancur** (termasuk daun). Enchant **Unbreaking** tetap mengurangi peluangnya
   (Unbreaking III = 25%). Jika daya tahan habis, proses berhenti dan alat patah.
+- **Animasi hancur:** setiap blok pecah dengan partikel & suara hancur vanilla, bergelombang dari blok pertama
+  (Vein Miner, Tree Capitator, Crop Capitator ±1 detik; 3x3x3 pecah serentak).
 - Semua barang dijatuhkan **bertumpuk di blok pertama** (sedikit entitas item = tidak lag), XP ore langsung masuk ke pemain.
-- Pemecahan dicicil maksimal 12 blok per tick supaya tidak patah-patah.
+- Tidak ada pemberitahuan jumlah blok atau daya tahan; alat yang patah hanya berbunyi seperti biasa.
 - **Tidak bentrok dengan addon lain:** hanya blok vanilla (`minecraft:`) yang ikut dihancurkan; blok addon lain, blok berisi
   barang (peti, barel, dll), bedrock, portal, spawner, dan blok tak tergantikan lain tidak pernah disentuh.
   Tanpa jongkok, semuanya berjalan seperti vanilla.
@@ -68,21 +71,33 @@ yang cocok pada level maksimal**:
 
 ---
 
-## Offhand
-Bedrock biasanya hanya mengizinkan beberapa item di tangan kiri. Dengan addon ini:
-- Ketik **`/offhand`** untuk **menukar** item tangan kanan ↔ tangan kiri (item apa pun, termasuk obor dan kompas).
-- Atau buka `/setting` → **Tukar Tangan (Offhand)**.
+## Offhand, Torch Detector & Compass Finder
+Tangan kiri vanilla Bedrock **tidak menerima obor dan kompas biasa**, dan addon tidak bisa mengubah item vanilla.
+Karena itu ada dua item baru yang **teksturnya sama persis dengan obor & kompas vanilla** (memakai file tekstur vanilla):
 
-## Ore Detector (obor di tangan kiri)
-Pegang **obor** (obor biasa, obor jiwa, atau obor tembaga) di tangan kiri:
+| Item | Resep (Meja Kerajinan, tanpa pola) | Fungsi di tangan kiri |
+|---|---|---|
+| **Torch Detector** | 1 Obor → 1 Torch Detector | Ore Detector |
+| **Compass Finder** | 1 Kompas → 1 Compass Finder | Compass Finder |
+
+Keduanya bisa dikembalikan lagi menjadi obor / kompas biasa (taruh 1 item di meja kerajinan).
+
+Cara memasang ke tangan kiri:
+- **Manual:** buka inventori lalu taruh item di **slot tangan kiri** (slot offhand), sama seperti perisai/totem.
+- **Klik kanan** Torch Detector / Compass Finder saat dipegang di tangan kanan → langsung pindah ke tangan kiri.
+- **`/offhand`** atau `/setting` → *Tukar Tangan*: menukar item tangan kanan ↔ kiri. Untuk item yang ditolak tangan kiri
+  vanilla, addon mencoba lewat perintah; jika tetap ditolak, muncul pesan agar memakai Torch Detector / Compass Finder.
+
+## Ore Detector (Torch Detector di tangan kiri)
+Pasang **Torch Detector** di tangan kiri (obor biasa/jiwa/tembaga juga dikenali jika berhasil dipasang ke tangan kiri):
 - Actionbar menunjukkan **ore terdekat**, jaraknya, dan **arah** relatif terhadap pandanganmu
   (`↑ ↗ → ↘ ↓ ↙ ← ↖`, plus `▲`/`▼` jika ore lebih tinggi/rendah ≥ 2 blok), juga jumlah ore lain di sekitar.
 - Partikel api biru kecil di depan mata menunjuk ke arah ore.
 - Jarak deteksi bawaan 16 blok (8–24 di `/setting`), setiap jenis ore bisa dimatikan.
 - Hemat lag: memakai pencarian blok bawaan game (`getBlocks`), memindai ulang hanya saat kamu berpindah blok atau tiap 2 detik.
 
-## Compass Finder (kompas di tangan kiri)
-Pegang **kompas** di tangan kiri → actionbar menunjukkan **struktur terdekat** yang sudah dikenali, jaraknya, dan arahnya,
+## Compass Finder (Compass Finder di tangan kiri)
+Pasang **Compass Finder** di tangan kiri (kompas biasa juga dikenali jika berhasil dipasang) → actionbar menunjukkan **struktur terdekat** yang sudah dikenali, jaraknya, dan arahnya,
 plus partikel hijau penunjuk arah. Struktur yang didukung (bisa dinyalakan/dimatikan satu per satu di `/setting`):
 
 Village, Nether Fortress, Camp (Abandoned Camp), Trial Chamber, Trail Ruins, Stronghold, Ancient City, Pillager Outpost,
@@ -116,13 +131,16 @@ Pengaturan disimpan **per pemain**.
 ## Untuk Pengembang
 ```
 Hardcore_Starter_Pack/
+  HardcoreStarterPack_RP/      ikon & nama Torch Detector / Compass Finder (tekstur vanilla)
   HardcoreStarterPack_BP/
     manifest.json
+    items/                     torch_detector.json, compass_finder.json (allow_off_hand)
+    recipes/                   obor <-> Torch Detector, kompas <-> Compass Finder
     loot_tables/hsp/enchant/   68 loot table enchant bentrok (dibuat tools/buat_loot.py)
     scripts/
       main.js        perintah /setting & /offhand, menyalakan semua sistem
       data.js        tabel ore, hasil lebur, tanaman, kayu/daun, tier alat, blok terlarang
-      tambang.js     Tree Capitator, Vein Miner, Auto Smelt, Crop Capitator, 3x3x3
+      tambang.js     Tree Capitator, Vein Miner, Auto Smelt, Crop Capitator, 3x3x3 + animasi hancur
       enchant.js     Hold to Enchant
       detektor.js    Ore Detector
       struktur.js    aturan blok khas setiap struktur + memori struktur
@@ -142,5 +160,6 @@ Membangun ulang: `python3 tools/buat_loot.py && ./tools/build.sh`.
 | `/setting` tidak dikenali | Pastikan pack aktif. Jika bentrok nama dengan addon lain, pakai `/hsp:setting` (dan `/hsp:offhand`). |
 | Menu tidak muncul | Tutup layar chat dulu; menu menunggu sampai chat tertutup. |
 | Fitur tambang tidak jalan | Harus **jongkok**, mode Survival/Adventure, alat yang cocok, dan fitur menyala di `/setting`. |
+| Obor/kompas biasa tidak mau masuk tangan kiri | Itu batasan vanilla; craft **Torch Detector** / **Compass Finder**. |
 | Kompas belum menunjuk apa pun | Jelajahi area baru; kompas hanya mengenali struktur di chunk yang sudah dimuat (lihat penjelasan di atas). |
 | Ingin melihat error | *Pengaturan → Kreator → Content Log GUI* (nyalakan), lalu kirim isi log saat melapor. |

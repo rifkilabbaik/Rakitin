@@ -12,7 +12,12 @@ function pemainDari(asal) {
   return e?.typeId === "minecraft:player" ? world.getAllPlayers().find((p) => p.id === e.id) : undefined;
 }
 
-system.beforeEvents.startup.subscribe(({ customCommandRegistry }) => {
+system.beforeEvents.startup.subscribe(({ customCommandRegistry, itemComponentRegistry }) => {
+  // Torch Detector / Compass Finder: klik kanan di tangan kanan -> pindah ke tangan kiri.
+  itemComponentRegistry.registerCustomComponent("hsp:pasang_offhand", {
+    onUse: ({ source }) => system.run(() => tukarTangan(source)),
+  });
+
   customCommandRegistry.registerCommand(
     {
       name: "hsp:setting",
@@ -52,8 +57,7 @@ world.afterEvents.worldLoad.subscribe(() => {
   world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
     if (initialSpawn) {
       player.sendMessage(
-        "§6[Hardcore Starter Pack] §fKetik §e/setting§f untuk pengaturan, §e/offhand§f untuk memindah item ke tangan kiri. " +
-          "Fitur tambang & panen aktif saat §ejongkok§f."
+        "§6[Hardcore Starter Pack] §fKetik §e/setting§f untuk pengaturan. Fitur tambang & panen aktif saat §ejongkok§f."
       );
     }
   });
