@@ -3,7 +3,7 @@ import { EquipmentSlot, system, world } from "@minecraft/server";
 import { KOMPAS } from "./data.js";
 import { atur } from "./pengaturan.js";
 import { STRUKTUR_PER_KUNCI, memoriStruktur, pindaiKolom } from "./struktur.js";
-import { arahKe, barSibuk, itemTangan, jarak, partikelPenunjuk, pesanBar } from "./util.js";
+import { arahKe, barSibuk, itemTangan, jarak, koordinat, partikelPenunjuk, pesanBar } from "./util.js";
 
 /** Kolom chunk yang sudah dipindai: "dim:cx:cz" -> tick. Dipindai ulang setelah 5 menit. */
 const dipindai = new Map();
@@ -53,36 +53,33 @@ function pindaiUntuk(player) {
   }
 }
 
-function sasaranTerdekat(player) {
+/** 3 struktur terdekat di dimensi pemain (yang jenisnya aktif). */
+function tigaTerdekat(player) {
   const a = atur(player);
-  let terbaik = null;
-  let jTerbaik = Infinity;
-  let jumlah = 0;
+  const daftar = [];
   for (const m of memoriStruktur()) {
     if (m.d !== player.dimension.id || a.strukturMati.includes(m.k)) continue;
-    jumlah++;
-    const j = jarak(m, player.location);
-    if (j < jTerbaik) {
-      jTerbaik = j;
-      terbaik = m;
-    }
+    daftar.push({ m, j: jarak(m, player.location) });
   }
-  return { sasaran: terbaik, jarak: jTerbaik, jumlah };
+  daftar.sort((x, y) => x.j - y.j);
+  return { tiga: daftar.slice(0, 3), jumlah: daftar.length };
 }
 
 function tampilkanNavigasi(player) {
-  const { sasaran, jarak: j, jumlah } = sasaranTerdekat(player);
-  if (!sasaran) {
+  const { tiga, jumlah } = tigaTerdekat(player);
+  if (!tiga.length) {
     const r = atur(player).radiusKompas;
-    pesanBar(player, `§e[Kompas] §7Mencari struktur... jelajahi area baru (jangkauan ${r} chunk)`);
+    player.onScreenDisplay.setActionBar(`§e[Kompas] §7Mencari struktur... jelajahi area baru (jangkauan ${r} chunk)`);
     return;
   }
-  const tengah = { x: sasaran.x + 0.5, y: sasaran.y + 0.5, z: sasaran.z + 0.5 };
-  const nama = STRUKTUR_PER_KUNCI.get(sasaran.k)?.nama ?? sasaran.k;
-  player.onScreenDisplay.setActionBar(
-    `§e[Kompas] §f${nama} §e${Math.round(j)}m §f${arahKe(player, tengah)} §8| ${jumlah} dikenal`
-  );
-  partikelPenunjuk(player, tengah, "minecraft:villager_happy");
+  const baris = tiga.map(({ m, j }) => {
+    const tengah = { x: m.x + 0.5, y: m.y + 0.5, z: m.z + 0.5 };
+    const nama = STRUKTUR_PER_KUNCI.get(m.k)?.nama ?? m.k;
+    return `§a${nama} §f${koordinat(m)} §7(${Math.round(j)}m ${arahKe(player, tengah)})`;
+  });
+  player.onScreenDisplay.setActionBar(`§e[Kompas] §7${jumlah} struktur dikenal\n${baris.join("\n")}`);
+  const m = tiga[0].m;
+  partikelPenunjuk(player, { x: m.x + 0.5, y: m.y + 0.5, z: m.z + 0.5 }, "minecraft:villager_happy");
 }
 
 export function mulaiKompas() {

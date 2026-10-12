@@ -19,6 +19,7 @@ const BAWAAN = {
   pilihanTambang: "fortune", // "fortune" | "silk_touch" | "tidak"
   enchantMati: [],
   detektor: true,
+  cahaya: true,
   radiusDetektor: 16,
   oreMati: [],
   kompas: true,
@@ -187,7 +188,8 @@ async function menuDetektor(player) {
   const a = atur(player);
   const form = new ModalFormData()
     .title("Ore Detector")
-    .toggle("Aktifkan (obor di tangan kiri)", { defaultValue: a.detektor })
+    .toggle("Aktifkan (Torch Detector di tangan kiri)", { defaultValue: a.detektor })
+    .toggle("Cahaya obor saat dipegang", { defaultValue: a.cahaya })
     .slider("Jarak deteksi (blok)", 8, 24, { defaultValue: a.radiusDetektor, valueStep: 2 });
   for (const o of ORE) form.toggle(`${o.warna}${o.nama}`, { defaultValue: !a.oreMati.includes(o.kunci) });
   const r = await tampilkan(player, form);
@@ -196,8 +198,9 @@ async function menuDetektor(player) {
   simpan(player, {
     ...a,
     detektor: !!v[0],
-    radiusDetektor: Number(v[1]),
-    oreMati: ORE.filter((_, i) => !v[i + 2]).map((o) => o.kunci),
+    cahaya: !!v[1],
+    radiusDetektor: Number(v[2]),
+    oreMati: ORE.filter((_, i) => !v[i + 3]).map((o) => o.kunci),
   });
   pesanBar(player, "§aPengaturan detektor disimpan.");
   await bukaMenu(player);
@@ -207,7 +210,7 @@ async function menuKompas(player) {
   const a = atur(player);
   const form = new ModalFormData()
     .title("Compass Finder")
-    .toggle("Aktifkan (kompas di tangan kiri)", { defaultValue: a.kompas })
+    .toggle("Aktifkan (Compass Finder di tangan kiri)", { defaultValue: a.kompas })
     .slider("Jangkauan pindai (chunk)", 2, 6, { defaultValue: a.radiusKompas, valueStep: 1 })
     .toggle("§cHapus memori struktur yang sudah ditemukan", { defaultValue: false });
   for (const s of STRUKTUR) form.toggle(s.nama, { defaultValue: !a.strukturMati.includes(s.kunci) });

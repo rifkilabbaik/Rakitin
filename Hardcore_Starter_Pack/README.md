@@ -1,3 +1,5 @@
+![Hardcore Starter Pack](docs/cover.png)
+
 # Hardcore Starter Pack
 
 Addon fungsi (tanpa tekstur baru) untuk Minecraft Bedrock **1.26.30+** (dibuat untuk **1.26.52**, Play Store).
@@ -13,8 +15,8 @@ memakai Script API stabil `@minecraft/server` 2.4.0 dan `@minecraft/server-ui` 2
 | 🧱 **3x3x3 Mining** | **Jongkok** + pecah blok biasa dengan **beliung / sekop / kapak** |
 | ✨ **Hold to Enchant** | Pegang item apa pun yang bisa di-enchant → semua enchant level maksimal |
 | ✋ **Offhand** | **Torch Detector** & **Compass Finder** bisa dipasang di tangan kiri; `/offhand` menukar tangan |
-| 🔦 **Ore Detector** | **Torch Detector** di tangan kiri → navigasi ke ore terdekat |
-| 🧭 **Compass Finder** | **Compass Finder** di tangan kiri → navigasi ke struktur terdekat |
+| 🔦 **Ore Detector** | **Torch Detector** di tangan kiri → koordinat 3 ore terdekat + cahaya obor |
+| 🧭 **Compass Finder** | **Compass Finder** di tangan kiri → koordinat 3 struktur terdekat |
 | ⚙️ **Menu** | Ketik **`/setting`** di chat |
 
 ---
@@ -90,15 +92,31 @@ Cara memasang ke tangan kiri:
 
 ## Ore Detector (Torch Detector di tangan kiri)
 Pasang **Torch Detector** di tangan kiri (obor biasa/jiwa/tembaga juga dikenali jika berhasil dipasang ke tangan kiri):
-- Actionbar menunjukkan **ore terdekat**, jaraknya, dan **arah** relatif terhadap pandanganmu
-  (`↑ ↗ → ↘ ↓ ↙ ← ↖`, plus `▲`/`▼` jika ore lebih tinggi/rendah ≥ 2 blok), juga jumlah ore lain di sekitar.
-- Partikel api biru kecil di depan mata menunjuk ke arah ore.
+- Actionbar menunjukkan **3 ore terdekat** lengkap dengan **koordinat**, jarak, dan arah, misalnya:
+  ```
+  [Detektor] 12 ore dalam 16 blok
+  Berlian 104 -58 -233 (5m ↗▼)
+  Emas 98 -55 -240 (9m ←)
+  Besi 101 -52 -228 (11m ↑▲)
+  ```
+  Blok ore sejenis yang berdempetan dihitung satu (jadi 3 baris = 3 lokasi berbeda). Arah relatif terhadap pandanganmu
+  (`↑ ↗ → ↘ ↓ ↙ ← ↖`, `▲`/`▼` jika lebih tinggi/rendah ≥ 2 blok).
+- Partikel api biru kecil di depan mata menunjuk ke ore terdekat.
+- **Cahaya obor:** Torch Detector yang dipegang (tangan kiri atau kanan) menerangi sekitarmu seperti obor sungguhan.
+  Cahaya ikut berpindah dan otomatis hilang saat obor dilepas (bisa dimatikan di `/setting`).
 - Jarak deteksi bawaan 16 blok (8–24 di `/setting`), setiap jenis ore bisa dimatikan.
 - Hemat lag: memakai pencarian blok bawaan game (`getBlocks`), memindai ulang hanya saat kamu berpindah blok atau tiap 2 detik.
 
 ## Compass Finder (Compass Finder di tangan kiri)
-Pasang **Compass Finder** di tangan kiri (kompas biasa juga dikenali jika berhasil dipasang) → actionbar menunjukkan **struktur terdekat** yang sudah dikenali, jaraknya, dan arahnya,
-plus partikel hijau penunjuk arah. Struktur yang didukung (bisa dinyalakan/dimatikan satu per satu di `/setting`):
+Pasang **Compass Finder** di tangan kiri (kompas biasa juga dikenali jika berhasil dipasang) → actionbar menunjukkan
+**3 struktur terdekat** yang sudah dikenali lengkap dengan **koordinat**, jarak, dan arah, misalnya:
+```
+[Kompas] 5 struktur dikenal
+Village 240 70 -112 (143m ↗)
+Trial Chamber 180 -20 -60 (210m ←▼)
+Ruined Portal 300 66 -10 (260m ↘)
+```
+plus partikel hijau penunjuk arah ke yang terdekat. Struktur yang didukung (bisa dinyalakan/dimatikan satu per satu di `/setting`):
 
 Village, Nether Fortress, Camp (Abandoned Camp), Trial Chamber, Trail Ruins, Stronghold, Ancient City, Pillager Outpost,
 Woodland Mansion, Dungeon, Buried Treasure, Ruined Portal, Desert Temple, Cave, Mineshaft, Ocean Monument, Lava Pool,
@@ -120,7 +138,7 @@ End City, End Gateway.
 Ketik `/setting` di chat lalu **tutup chat**, menu akan terbuka:
 - **Tambang & Panen**: nyalakan/matikan Tree Capitator, Vein Miner, Auto Smelt, Crop Capitator, 3x3x3, batas blok.
 - **Hold to Enchant**: aktif/nonaktif, pilihan Fortune / Silk Touch / tanpa keduanya, dan saklar setiap enchant.
-- **Ore Detector**: aktif/nonaktif, jarak deteksi, saklar setiap jenis ore.
+- **Ore Detector**: aktif/nonaktif, cahaya obor, jarak deteksi, saklar setiap jenis ore.
 - **Compass Finder**: aktif/nonaktif, jangkauan pindai, hapus memori, saklar setiap struktur.
 - **Tukar Tangan (Offhand)**.
 
@@ -142,17 +160,19 @@ Hardcore_Starter_Pack/
       data.js        tabel ore, hasil lebur, tanaman, kayu/daun, tier alat, blok terlarang
       tambang.js     Tree Capitator, Vein Miner, Auto Smelt, Crop Capitator, 3x3x3 + animasi hancur
       enchant.js     Hold to Enchant
-      detektor.js    Ore Detector
+      detektor.js    Ore Detector (3 ore terdekat + koordinat)
+      cahaya.js      cahaya Torch Detector (blok cahaya tak terlihat yang ikut berpindah)
       struktur.js    aturan blok khas setiap struktur + memori struktur
       kompas.js      Compass Finder (pemindaian bertahap + navigasi)
       pengaturan.js  pengaturan per pemain + menu
       util.js        helper (navigasi, actionbar, gabung drop)
   tools/
+    buat_cover.py    generator cover (docs/cover.png) & pack_icon.png
     buat_loot.py     generator loot table enchant
     build.sh         membuat dist/*.mcaddon & *.mcpack
   dist/
 ```
-Membangun ulang: `python3 tools/buat_loot.py && ./tools/build.sh`.
+Membangun ulang: `python3 tools/buat_loot.py && python3 tools/buat_cover.py && ./tools/build.sh`.
 
 ## Masalah Umum
 | Masalah | Solusi |

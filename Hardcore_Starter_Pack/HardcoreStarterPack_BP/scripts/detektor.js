@@ -2,7 +2,7 @@
 import { BlockVolume, EquipmentSlot, system, world } from "@minecraft/server";
 import { OBOR, ORE, ORE_PER_BLOK } from "./data.js";
 import { atur, versiAtur } from "./pengaturan.js";
-import { arahKe, barSibuk, itemTangan, jarak, partikelPenunjuk } from "./util.js";
+import { arahKe, barSibuk, itemTangan, jarak, koordinat, partikelPenunjuk } from "./util.js";
 
 /** Cache per pemain: posisi pindai terakhir + daftar ore. */
 const cache = new Map();
@@ -68,28 +68,32 @@ function perluPindai(player) {
   );
 }
 
+/** 3 deposit ore terdekat (blok sejenis yang berdempetan dihitung satu deposit). */
+function tigaTerdekat(daftar, kepala) {
+  const urut = daftar.map((d) => ({ ...d, j: jarak(d.lok, kepala) })).sort((a, b) => a.j - b.j);
+  const pilih = [];
+  for (const d of urut) {
+    if (pilih.some((p) => p.ore === d.ore && jarak(p.lok, d.lok) <= 2.5)) continue;
+    pilih.push(d);
+    if (pilih.length >= 3) break;
+  }
+  return pilih;
+}
+
 function tampilkan(player) {
   const c = cache.get(player.id);
   const r = atur(player).radiusDetektor;
-  const terdekat = c?.daftar.find((d) => d.ore);
-  if (!terdekat) {
+  const kepala = player.getHeadLocation();
+  const tiga = c ? tigaTerdekat(c.daftar, kepala) : [];
+  if (!tiga.length) {
     player.onScreenDisplay.setActionBar(`§6[Detektor] §7Tidak ada ore dalam ${r} blok`);
     return;
   }
-  const j = jarak(terdekat.lok, player.getHeadLocation());
-  const o = terdekat.ore;
-  // Ringkas jenis ore lain yang terdeteksi (maks 3 jenis).
-  const lain = [];
-  for (const d of c.daftar) {
-    if (!d.ore || d.ore === o || lain.includes(d.ore)) continue;
-    lain.push(d.ore);
-    if (lain.length >= 3) break;
-  }
-  const teksLain = lain.map((x) => `${x.warna}■`).join("");
-  player.onScreenDisplay.setActionBar(
-    `§6[Detektor] ${o.warna}${o.nama} §f${Math.round(j)}m ${arahKe(player, terdekat.lok)} §8| ${c.total} ore ${teksLain}`
+  const baris = tiga.map(
+    (d) => `${d.ore.warna}${d.ore.nama} §f${koordinat(d.lok)} §7(${Math.round(d.j)}m ${arahKe(player, d.lok)})`
   );
-  partikelPenunjuk(player, terdekat.lok, "minecraft:blue_flame_particle");
+  player.onScreenDisplay.setActionBar(`§6[Detektor] §7${c.total} ore dalam ${r} blok\n${baris.join("\n")}`);
+  partikelPenunjuk(player, tiga[0].lok, "minecraft:blue_flame_particle");
 }
 
 export function mulaiDetektor() {

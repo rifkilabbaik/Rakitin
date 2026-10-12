@@ -1,5 +1,6 @@
 // Hardcore Starter Pack - titik masuk script.
 import { CommandPermissionLevel, CustomCommandStatus, system, world } from "@minecraft/server";
+import { mulaiCahaya } from "./cahaya.js";
 import { mulaiDetektor } from "./detektor.js";
 import { mulaiEnchant } from "./enchant.js";
 import { mulaiKompas } from "./kompas.js";
@@ -53,6 +54,7 @@ world.afterEvents.worldLoad.subscribe(() => {
   mulaiEnchant();
   mulaiDetektor();
   mulaiKompas();
+  mulaiCahaya();
   world.afterEvents.playerLeave.subscribe(({ playerId }) => lupakanPemain(playerId));
   world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
     if (initialSpawn) {

@@ -90,6 +90,11 @@ export function arahKe(player, sasaran) {
   return `${panah}${vertikal}` || "•";
 }
 
+/** Koordinat blok "x y z". */
+export function koordinat(l) {
+  return `${Math.floor(l.x)} ${Math.floor(l.y)} ${Math.floor(l.z)}`;
+}
+
 /** Partikel penunjuk arah 1,5 blok di depan mata, hanya terlihat oleh pemain itu. */
 export function partikelPenunjuk(player, sasaran, partikel) {
   const asal = player.getHeadLocation();
