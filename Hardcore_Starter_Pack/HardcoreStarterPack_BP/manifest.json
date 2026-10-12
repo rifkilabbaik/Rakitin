@@ -1,0 +1,55 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Hardcore Starter Pack",
+    "description": "Tree Capitator, Vein Miner, Auto Smelt, Crop Capitator, 3x3 Mining, Hold to Enchant, Offhand, Ore Detector, Compass Finder. Ketik /setting untuk pengaturan.",
+    "uuid": "ba3277af-1d0d-4c8e-ac6b-76650621117e",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      30
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "4091c678-e398-418a-a45f-a2ae29dfc786",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "4f906ebb-6398-4d48-8e6f-511013345c57",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.4.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Hardcore Starter Pack"
+    ]
+  }
+}

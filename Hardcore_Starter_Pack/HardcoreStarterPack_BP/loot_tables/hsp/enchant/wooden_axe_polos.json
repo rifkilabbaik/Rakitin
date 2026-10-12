@@ -1,0 +1,45 @@
+{
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "minecraft:wooden_axe",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "specific_enchants",
+              "enchants": [
+                {
+                  "id": "efficiency",
+                  "level": 5
+                },
+                {
+                  "id": "sharpness",
+                  "level": 5
+                },
+                {
+                  "id": "smite",
+                  "level": 5
+                },
+                {
+                  "id": "bane_of_arthropods",
+                  "level": 5
+                },
+                {
+                  "id": "unbreaking",
+                  "level": 3
+                },
+                {
+                  "id": "mending",
+                  "level": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
